@@ -18,9 +18,11 @@ public class Wave {
     private final static String ENEMY_SLICER = "slicer";
     private final static String splitByCSV= ",";
 
-    private int waveNumber;
-    private int levelNumber;
-    private Set<Enemy> Enemies = new HashSet<>();
+    private final int waveNumber;
+    private final int levelNumber;
+    private long timePrev = 0;
+    private float gameTimeElapsed = 0;
+    private final Set<Enemy> Enemies = new HashSet<>();
 
     /**
      * wave constructor
@@ -71,15 +73,29 @@ public class Wave {
      * @param points a list of a list of points forming a polyline that enemies follow as a path
      */
     public void drawEnemies(long time, float timeScale, List<List<Point>> points) {
+
+        //initialise timePrev as time
+        if (timePrev == 0) { timePrev = time; }
+
+        //get time in seconds between last frame and this one
+        float secondsPerFrame = (System.currentTimeMillis() - timePrev) / 1000f;
+
+        //add that time multiplied by timeScale to get a total time elapsed since wave started
+        gameTimeElapsed += secondsPerFrame * timeScale;
+
+        //update previous time
+        timePrev = System.currentTimeMillis();
+
+        //iterate through enemies and awaken them if spawnDelay time has elapsed
         Enemies.forEach((Enemy enemy) -> {
-            if ((System.currentTimeMillis() - time)/1000f/timeScale > enemy.getSpawnDelay()) {
+            if (gameTimeElapsed > enemy.getSpawnDelay()) {
                 enemy.awake();
             }
+            //draw enemies
             if (enemy.getIndex() < points.get(0).size() && enemy.isActive()) {
                 enemy.draw(timeScale, points.get(0).get(enemy.getIndex()).asVector());
             }
         });
+
     }
-
-
 }

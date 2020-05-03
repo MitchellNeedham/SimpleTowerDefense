@@ -1,2 +1,6 @@
 enemyType,moveDelay,enemySpeed
 slicer,0.0,1.0
+slicer,5.0,1.0
+slicer,10.0,1.0
+slicer,15.0,1.0
+slicer,20.0,1.0

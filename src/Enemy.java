@@ -51,7 +51,6 @@ public class Enemy {
 
         DrawOptions rotate = new DrawOptions().setRotation(angle);
 
-        System.out.println(moveVector.length());
 
         img.draw(position.x, position.y, rotate);
     }
