@@ -30,6 +30,7 @@ public class Game extends AbstractGame {
     private Level level;
     private Wave wave;
     private int currentLevel = 1;
+    private int maxLevels;
     private float timeScale = 1.0f;
     private long time;
 
@@ -45,7 +46,11 @@ public class Game extends AbstractGame {
     public Game(){
         //create level where waves are created and run
         this.level = new Level(currentLevel);
+        this.maxLevels = getMaxLevels();
+        System.out.println(maxLevels);
+
         this.map = level.createMap();
+
 
         //set time as milliseconds since 1970
         this.time = System.currentTimeMillis();
@@ -64,10 +69,13 @@ public class Game extends AbstractGame {
         renderImagesOffScreen();
 
         //start wave when 'S' key is pressed, but only if a wave is not in progress
-        if (input.isDown(Keys.S) && level.isWaveComplete()) {
+        if (input.wasPressed(Keys.S) && level.isWaveComplete()) {
             //update time
             time = System.currentTimeMillis();
             wave = level.startNextWave();
+            if (wave == null) {
+                Window.close();
+            }
         }
 
         //increase timeScale
@@ -86,6 +94,24 @@ public class Game extends AbstractGame {
             wave.drawEnemies(time, timeScale, map.getAllPolylines());
         }
 
+        //if level is complete, start new level
+        //if no more levels, close window and exit game
+        if (level.isLevelComplete()) {
+            if (currentLevel == maxLevels) {
+                Window.close();
+                System.exit(0);
+            }
+
+            //next level
+            currentLevel++;
+            level = new Level(currentLevel);
+            this.map = level.createMap();
+
+            //reset timeScale
+            timeScale = 1;
+
+
+        }
     }
 
     /**
@@ -99,6 +125,19 @@ public class Game extends AbstractGame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * get max levels by returning number of folders in levels
+     * @return return max levels
+     */
+    private int getMaxLevels() {
+        try (Stream<Path> paths = Files.walk(Paths.get("res/levels/"))) {
+            return (int) paths.skip(1).filter(Files::isDirectory).count();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
 }

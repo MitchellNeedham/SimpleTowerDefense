@@ -9,6 +9,11 @@ import java.util.Set;
 import bagel.util.Point;
 import bagel.util.Vector2;
 import org.lwjgl.system.CallbackI;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class Wave {
@@ -87,15 +92,26 @@ public class Wave {
         timePrev = System.currentTimeMillis();
 
         //iterate through enemies and awaken them if spawnDelay time has elapsed
-        Enemies.forEach((Enemy enemy) -> {
+        Enemies.forEach(enemy -> {
             if (gameTimeElapsed > enemy.getSpawnDelay()) {
                 enemy.awake();
             }
             //draw enemies
             if (enemy.getIndex() < points.get(0).size() && enemy.isActive()) {
                 enemy.draw(timeScale, points.get(0).get(enemy.getIndex()).asVector());
+            } else if (enemy.getIndex() == points.get(0).size()) {
+                enemy.destroy();
             }
+
         });
 
+    }
+
+    /**
+     * Wave is complete if all enemies are destroyed either by leaving map or some other method
+     * @return boolean for wave ending
+     */
+    public boolean isWaveComplete() {
+        return Enemies.stream().allMatch(enemy -> Boolean.TRUE.equals(enemy.isDestroyed()));
     }
 }

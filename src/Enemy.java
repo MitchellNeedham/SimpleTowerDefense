@@ -11,6 +11,7 @@ public class Enemy {
     private Vector2 position;
     private Vector2 moveVector;
     private boolean active = false;
+    private boolean destroyed = false;
     private double angle;
 
     /**
@@ -48,9 +49,7 @@ public class Enemy {
 
         angle = Math.atan2(moveVector.y, moveVector.x);
 
-
         DrawOptions rotate = new DrawOptions().setRotation(angle);
-
 
         img.draw(position.x, position.y, rotate);
     }
@@ -83,6 +82,18 @@ public class Enemy {
      */
     public float getSpawnDelay() {
         return spawnDelay;
+    }
+
+    public void destroy() {
+        this.destroyed = true;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public boolean isDestroyed() {
+        return destroyed;
     }
 
 
