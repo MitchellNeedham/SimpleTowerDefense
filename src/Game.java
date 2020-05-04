@@ -3,18 +3,9 @@ import bagel.Window;
 import bagel.map.TiledMap;
 import bagel.Image;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import bagel.util.Point;
-
-import java.awt.*;
-import java.time.LocalTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.Stack;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class Game extends AbstractGame {
@@ -36,8 +27,7 @@ public class Game extends AbstractGame {
     private int currentLevel = 1;
     private Wave wave;
     private float timeScale = 1.0f;
-    private long time;
-    private Stack<Image> imageFiles = new Stack<>();
+    private final Stack<Image> imageFiles = new Stack<>();
 
     public static void main(String[] args) {
         // Create new instance of game and run it
@@ -54,9 +44,6 @@ public class Game extends AbstractGame {
         System.out.println(maxLevels);
 
         this.map = level.createMap();
-
-        //set time as milliseconds since 1970
-        this.time = System.currentTimeMillis();
 
         getAllImageFiles();
 
@@ -79,8 +66,6 @@ public class Game extends AbstractGame {
 
         //start wave when 'S' key is pressed, but only if a wave is not in progress
         if (input.wasPressed(Keys.S) && level.isWaveComplete()) {
-            //update time
-            time = System.currentTimeMillis();
             wave = level.startNextWave();
             if (wave == null) {
                 Window.close();
@@ -100,7 +85,8 @@ public class Game extends AbstractGame {
 
         //if wave is in progress, draw enemies
         if (!level.isWaveComplete()) {
-            wave.drawEnemies(time, timeScale, map.getAllPolylines());
+            wave.getTime().updateTime(timeScale);
+            wave.drawEnemies(timeScale, map.getAllPolylines());
         }
 
         //if level is complete, start new level

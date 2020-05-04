@@ -1,5 +1,4 @@
 import bagel.*;
-import bagel.util.Point;
 import bagel.util.Vector2;
 import java.lang.Math;
 
