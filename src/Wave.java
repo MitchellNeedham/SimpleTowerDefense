@@ -22,6 +22,7 @@ public class Wave {
     private final static String FILE_EXT = ".csv";
     private final static String ENEMY_SLICER = "slicer";
     private final static String splitByCSV= ",";
+    private final Time gameTime;
     private final int waveNumber;
     private final int levelNumber;
     private long timePrev = 0;
@@ -37,6 +38,7 @@ public class Wave {
         //constructor
         this.waveNumber = waveNumber;
         this.levelNumber = level;
+        this.gameTime = new Time();
 
         //create enemies
         spawnEnemies();
@@ -81,27 +83,14 @@ public class Wave {
     /**
      * Run through list of enemies and awakens them after their spawn delay time has elapsed
      * gets next point that enemy is moving towards and draws enemy
-     * @param time time elapsed since start of wave
      * @param timeScale game speed multiplier
      * @param points a list of a list of points forming a polyline that enemies follow as a path
      */
-    public void drawEnemies(long time, float timeScale, List<List<Point>> points) {
-
-        //initialise timePrev as time
-        if (timePrev == 0) { timePrev = time; }
-
-        //get time in seconds between last frame and this one
-        float secondsPerFrame = (System.currentTimeMillis() - timePrev) / 1000f;
-
-        //add that time multiplied by timeScale to get a total time elapsed since wave started
-        gameTimeElapsed += secondsPerFrame * timeScale;
-
-        //update previous time
-        timePrev = System.currentTimeMillis();
+    public void drawEnemies(float timeScale, List<List<Point>> points) {
 
         //iterate through enemies and awaken them if spawnDelay time has elapsed
         Enemies.forEach(enemy -> {
-            if (gameTimeElapsed > enemy.getSpawnDelay()) {
+            if (this.gameTime.getTotalGameTime() > enemy.getSpawnDelay()) {
                 enemy.awake();
             }
             //draw enemies
@@ -121,5 +110,13 @@ public class Wave {
      */
     public boolean isWaveComplete() {
         return Enemies.stream().allMatch(enemy -> Boolean.TRUE.equals(enemy.isDestroyed()));
+    }
+
+    /**
+     * return Time onject for this wave
+     * @return Time object gameTime
+     */
+    public Time getTime(){
+        return gameTime;
     }
 }

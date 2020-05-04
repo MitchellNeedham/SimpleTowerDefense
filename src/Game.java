@@ -100,7 +100,8 @@ public class Game extends AbstractGame {
 
         //if wave is in progress, draw enemies
         if (!level.isWaveComplete()) {
-            wave.drawEnemies(time, timeScale, map.getAllPolylines());
+            wave.getTime().updateTime(timeScale);
+            wave.drawEnemies(timeScale, map.getAllPolylines());
         }
 
         //if level is complete, start new level

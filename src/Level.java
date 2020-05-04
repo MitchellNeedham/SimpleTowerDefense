@@ -27,7 +27,6 @@ public class Level {
      * @param level Number of level
      */
     public Level(int level) {
-        System.out.println(level);
         this.level = level;
         this.maxWaves = getMaxWaves();
     }
