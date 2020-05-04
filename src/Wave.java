@@ -22,7 +22,6 @@ public class Wave {
     private final static String FILE_EXT = ".csv";
     private final static String ENEMY_SLICER = "slicer";
     private final static String splitByCSV= ",";
-
     private final int waveNumber;
     private final int levelNumber;
     private long timePrev = 0;
@@ -35,36 +34,45 @@ public class Wave {
      * @param waveNumber wave number
      */
     public Wave(int level, int waveNumber) {
+        //constructor
         this.waveNumber = waveNumber;
         this.levelNumber = level;
 
+        //create enemies
         spawnEnemies();
-
     }
 
     /**
      * Reads file containing data for the wave and creates the appropriate enemy with parameters
      */
     private void spawnEnemies() {
+        //get wave file
         String filePath = FILE_PATH + levelNumber + FILE_NAME + waveNumber + FILE_EXT;
+
+
         try {
             File fp = new File(filePath);
             Scanner myReader = new Scanner(fp);
             while (myReader.hasNextLine()) {
                 Enemy enemy = null;
 
+                //save enemy information
                 String[] enemyInfo = myReader.nextLine().split(splitByCSV);
 
+                //create new slicer enemy type
                 if (enemyInfo[0].equals(ENEMY_SLICER)) {
                     enemy = new Slicer(Float.parseFloat(enemyInfo[2]), Float.parseFloat(enemyInfo[1]));
                 }
 
+                //add enemy to enemy set
                 if (enemy != null) {
                     Enemies.add(enemy);
                 }
             }
             myReader.close();
+
         } catch (FileNotFoundException e) {
+            //print error if no file found
             System.out.println("An error occurred.");
             e.printStackTrace();
         }

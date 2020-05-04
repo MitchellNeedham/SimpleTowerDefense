@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+
 public class Level {
 
     private final static String MAP_PATH = "res/levels/";
@@ -36,17 +37,25 @@ public class Level {
      * @return TiledMap object with map file loaded
      */
     public TiledMap createMap() {
+        //check level folder for a ".tmx" file and use this as the map
         try (Stream<Path> paths = Files.walk(Paths.get(MAP_PATH + level))) {
             paths
                     .forEach( p -> {
-                        if (p.toString().endsWith(".tmx")) {
+                        //check if file ends with ".tmx"
+                        if (p.toString().endsWith(MAP_EXT)) {
                             MAP_FILE = p.toString();
                         }
 
                     });
+
         } catch (IOException e) {
+            //if no map file found, exit game
             e.printStackTrace();
+            Window.close();
+            System.exit(-1);
         }
+
+        // return TiledMap object with new map
         return new TiledMap(MAP_FILE);
     }
 
@@ -78,8 +87,8 @@ public class Level {
     }
 
     /**
-     *
-     * @return
+     * check level folder for total number of ".csv" files and return it
+     * @return number of total waves in this level
      */
     private int getMaxWaves() {
         try (Stream<Path> paths = Files.walk(Paths.get("res/levels/" + level))) {
@@ -92,8 +101,8 @@ public class Level {
 
 
     /**
-     *
-     * @return
+     * return boolean value for levelComplete
+     * @return boolean if level is complete
      */
     public boolean isLevelComplete() {
         return levelComplete;
