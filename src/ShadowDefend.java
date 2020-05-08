@@ -12,6 +12,20 @@ public class ShadowDefend extends AbstractGame {
 
     /**
      * Entry point for ShadowDefend game
+     *
+     * PLEASE NOTE: The res directory has been modified slightly
+     * Instead, you'll find the files in res/levels/1
+     * and a new file called 'wave 1.csv' that contains all information regarding the enemies for that wave
+     *
+     * The underlying reasoning behind this change is to create clean future proofed code
+     * The number of levels is determined by the number of subdirectories in levels
+     * and the number of waves is determined by the number of 'wave %d.csv' files
+     *
+     * This allows levels to have different maps and paths, and also many waves
+     * without the need to set them all up within the code
+     *
+     * Therefore, to change/create levels and waves, all you need to do is edit the res files
+     *
      */
 
     private final static int OFF_SCREEN_X = -100;
@@ -44,7 +58,6 @@ public class ShadowDefend extends AbstractGame {
         this.map = level.createMap();
 
         getAllImageFiles();
-
     }
 
     /**
