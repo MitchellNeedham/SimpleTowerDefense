@@ -13,11 +13,10 @@ public class Wave {
     private final static String FILE_EXT = ".csv";
     private final static String ENEMY_SLICER = "slicer";
     private final static String splitByCSV= ",";
+
     private final Time gameTime;
     private final int waveNumber;
     private final int levelNumber;
-    private long timePrev = 0;
-    private float gameTimeElapsed = 0;
     private final Set<Enemy> Enemies = new HashSet<>();
 
     /**
@@ -42,7 +41,6 @@ public class Wave {
         //get wave file
         String filePath = FILE_PATH + levelNumber + FILE_NAME + waveNumber + FILE_EXT;
 
-
         try {
             File fp = new File(filePath);
             Scanner myReader = new Scanner(fp);
@@ -66,7 +64,6 @@ public class Wave {
 
         } catch (FileNotFoundException e) {
             //print error if no file found
-            System.out.println("An error occurred.");
             e.printStackTrace();
         }
     }

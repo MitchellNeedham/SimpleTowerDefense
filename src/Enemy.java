@@ -41,7 +41,7 @@ public class Enemy {
             position = nextPoint;
         }
 
-        //if enemy is within (movementSpeed * timeScale) pixels (i.e the closest position to nextPoint)
+        //if enemy is within (movementSpeed * timeScale) pixels (i.e the closest position enroute to nextPoint)
         //change the point enemy is heading towards and draw enemy at nextPoint
         if (position.sub(nextPoint).length() <= movementSpeed * timeScale) {
             pointsIndex++;

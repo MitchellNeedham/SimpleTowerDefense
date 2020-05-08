@@ -8,12 +8,10 @@ import java.nio.file.*;
 import java.util.Stack;
 import java.util.stream.Stream;
 
-public class Game extends AbstractGame {
+public class ShadowDefend extends AbstractGame {
 
     /**
-     * Entry point for Bagel game
-     *
-     * Explore the capabilities of Bagel: https://people.eng.unimelb.edu.au/mcmurtrye/bagel-doc/
+     * Entry point for ShadowDefend game
      */
 
     private final static int OFF_SCREEN_X = -100;
@@ -31,13 +29,13 @@ public class Game extends AbstractGame {
 
     public static void main(String[] args) {
         // Create new instance of game and run it
-        new Game().run();
+        new ShadowDefend().run();
     }
 
     /**
      * Setup the game
      */
-    public Game(){
+    public ShadowDefend(){
         //create level where waves are created and run
         this.level = new Level(currentLevel);
         this.maxLevels = getMaxLevels();
@@ -83,7 +81,7 @@ public class Game extends AbstractGame {
             }
         }
 
-        //if wave is in progress, draw enemies
+        //if wave is in progress, update gameTime from start of wave and draw enemies
         if (!level.isWaveComplete()) {
             wave.getTime().updateTime(timeScale);
             wave.drawEnemies(timeScale, map.getAllPolylines());
@@ -113,7 +111,7 @@ public class Game extends AbstractGame {
     private void getAllImageFiles() {
         try (Stream<Path> paths = Files.walk(Paths.get(IMG_PATH))) {
             paths
-                    .skip(1)
+                    .filter(Files::isRegularFile)
                     .forEach((p) -> imageFiles.push(new Image(p.toString())));
         } catch (IOException e) {
             e.printStackTrace();
@@ -121,7 +119,7 @@ public class Game extends AbstractGame {
     }
 
     /**
-     * get max levels by returning number of folders in levels
+     * get max levels by returning number of folders in 'levels' folder
      * @return return max levels
      */
     private int getMaxLevels() {
