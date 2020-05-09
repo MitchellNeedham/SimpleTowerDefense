@@ -9,33 +9,66 @@ import bagel.util.Point;
 
 public class Wave {
     private final static String FILE_PATH = "res/levels/";
-    private final static String FILE_NAME = "/waves ";
-    private final static String FILE_EXT = ".txt";
+    private final static String FILE_NAME = "/wave ";
+    private final static String FILE_EXT = ".csv";
     private final static String ENEMY_SLICER = "slicer";
     private final static String splitByCSV= ",";
 
-    private Time gameTime = null;
+    private Time gameTime;
     private final int waveNumber;
     private final int levelNumber;
+    private boolean inProgress = false;
+    private boolean spawning = false;
     private final Set<Enemy> Enemies = new HashSet<>();
-    private final Set<String[]> Instructions = new HashSet<>();
+
+    private int totalDelay = 0;
 
     /**
      * wave constructor
      * @param level level number
+     * @param waveNumber wave number
      */
-    public Wave(int level, String[] waveData) {
+    public Wave(int level, int waveNumber) {
         //constructor
-        this.waveNumber = Integer.parseInt(waveData[0]);
+        this.waveNumber = waveNumber;
         this.levelNumber = level;
+        System.out.println(this.waveNumber);
+        //this.gameTime = new Time();
+
+        //create enemies
+        //spawnEnemies();
     }
+
+    public void addEnemies(String[] enemyData) {
+
+        int enemyCount = Integer.parseInt(enemyData[2]);
+        int i = 0;
+        for (i = 0; i < enemyCount; i++) {
+            Enemies.add(new Slicer(totalDelay, enemyData[3]));
+            totalDelay += Integer.parseInt(enemyData[4]);
+            System.out.println(totalDelay);
+        }
+    }
+
+    public void addDelay(int delay) {
+        totalDelay += delay;
+    }
+
+    public void startWave() {
+        System.out.println(waveNumber);
+        gameTime = new Time();
+        inProgress = true;
+        spawning = true;
+    }
+
+    //project 1 stuff below//
 
     /**
      * Reads file containing data for the wave and creates the appropriate enemy with parameters
-     */
+
     private void spawnEnemies() {
         //get wave file
-        String filePath = FILE_PATH + levelNumber + FILE_NAME + FILE_EXT;
+        String filePath = FILE_PATH + levelNumber + FILE_NAME + waveNumber + FILE_EXT;
 
         try {
             File fp = new File(filePath);
@@ -48,8 +81,7 @@ public class Wave {
 
                 //create new slicer enemy type
                 if (enemyInfo[0].equals(ENEMY_SLICER)) {
-
-
+                    enemy = new Slicer(Float.parseFloat(enemyInfo[2]), Float.parseFloat(enemyInfo[1]));
                 }
 
                 //add enemy to enemy set
@@ -63,7 +95,7 @@ public class Wave {
             //print error if no file found
             e.printStackTrace();
         }
-    }
+    }*/
 
     /**
      * Run through list of enemies and awakens them after their spawn delay time has elapsed
@@ -73,6 +105,9 @@ public class Wave {
      */
     public void drawEnemies(float timeScale, List<List<Point>> points) {
 
+        if (this.gameTime.getTotalGameTime() > totalDelay) {
+            spawning = false;
+        }
         //iterate through enemies and awaken them if spawnDelay time has elapsed
         Enemies.forEach(enemy -> {
             if (this.gameTime.getTotalGameTime() > enemy.getSpawnDelay()) {
@@ -105,11 +140,11 @@ public class Wave {
         return gameTime;
     }
 
-    public int getWaveNumber() {
-        return waveNumber;
+    public boolean isInProgress() {
+        return inProgress;
     }
 
-    public void updateWave(String[] data) {
-
+    public boolean isSpawning() {
+        return spawning;
     }
 }

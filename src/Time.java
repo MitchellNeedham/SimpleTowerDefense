@@ -1,7 +1,7 @@
 public final class Time {
 
     private long currentTime;
-    private float totalGameTime;
+    private long totalGameTime;
 
     //constructor for time
     public Time() {
@@ -14,13 +14,13 @@ public final class Time {
     public void updateTime(float timeScale) {
         long previousTime = currentTime;
         currentTime = System.currentTimeMillis();
-        totalGameTime += (currentTime - previousTime)/1000f * timeScale;
+        totalGameTime += (currentTime - previousTime) * timeScale;
     }
 
     /**
      * @return total in game time since Time object creared
      */
-    public float getTotalGameTime() {
+    public long getTotalGameTime() {
         return totalGameTime;
     }
 }

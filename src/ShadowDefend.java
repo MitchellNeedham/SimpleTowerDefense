@@ -37,7 +37,7 @@ public class ShadowDefend extends AbstractGame {
     private final int maxLevels;
     private Level level;
     private int currentLevel = 1;
-    private Wave wave;
+    //private Wave wave;
     private float timeScale = 1.0f;
     private final Stack<Image> imageFiles = new Stack<>();
 
@@ -76,15 +76,17 @@ public class ShadowDefend extends AbstractGame {
 
 
         //start wave when 'S' key is pressed, but only if a wave is not in progress
-        if (input.wasPressed(Keys.S) && level.isLevelComplete()) {
+        if (input.wasPressed(Keys.S) && !level.isInProgress()) {
             level.start();
+            //wave = level.startNextWave();
+            //if (wave == null) {
+            //    Window.close();
+            //}
         }
 
         //increase timeScale
         if (input.wasPressed(Keys.L)) {
-            if (timeScale < 5) {
-                timeScale++;
-            }
+            timeScale++;
         }
         //decrease timeScale
         if (input.wasPressed(Keys.K)) {
@@ -94,9 +96,8 @@ public class ShadowDefend extends AbstractGame {
         }
 
         //if wave is in progress, update gameTime from start of wave and draw enemies
-        if (!level.isLevelComplete()) {
-            wave.getTime().updateTime(timeScale);
-            wave.drawEnemies(timeScale, map.getAllPolylines());
+        if (level.isInProgress()) {
+            level.update(timeScale, map.getAllPolylines());
         }
 
         //if level is complete, start new level
