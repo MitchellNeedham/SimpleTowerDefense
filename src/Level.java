@@ -2,10 +2,13 @@
 import bagel.Window;
 import bagel.map.TiledMap;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Stream;
 
 
@@ -16,9 +19,10 @@ public class Level {
     private static String MAP_FILE;
 
     private final int level;
-    private final int maxWaves;
+    private boolean inProgress = false;
     private int currentWave = 0;
     private Wave wave;
+    private Stack<Wave> waves = new Stack<>();
 
     private boolean levelComplete = false;
 
@@ -28,7 +32,11 @@ public class Level {
      */
     public Level(int level) {
         this.level = level;
-        this.maxWaves = getMaxWaves();
+        getWaves();
+    }
+
+    public void start() {
+        inProgress = true;
     }
 
     /**
@@ -59,51 +67,35 @@ public class Level {
     }
 
     /**
-     * begins wave if next wave exists
-     * @return Wave object
-     */
-    public Wave startNextWave() {
-        currentWave++;
-        if (currentWave <= maxWaves) {
-            return this.wave = new Wave(level, currentWave);
-        }
-        return null;
-    }
-
-    /**
-     * Determines if a wave has completed (i.e no more enemies)
-     * @return true or false depending on whether wave is nullified
-     */
-    public boolean isWaveComplete() {
-        if (wave != null) {
-            boolean waveComplete = wave.isWaveComplete();
-            if (currentWave == maxWaves && waveComplete) {
-                levelComplete = true;
-            }
-            return waveComplete;
-        }
-        return true;
-    }
-
-    /**
-     * check level folder for total number of ".csv" files and return it
-     * @return number of total waves in this level
-     */
-    private int getMaxWaves() {
-        try (Stream<Path> paths = Files.walk(Paths.get("res/levels/" + level))) {
-            return (int) paths.filter(p -> p.toString().endsWith(".csv")).count();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return 0;
-    }
-
-
-    /**
      * return boolean value for levelComplete
      * @return boolean if level is complete
      */
     public boolean isLevelComplete() {
-        return levelComplete;
+        return !inProgress;
+    }
+
+
+    private void getWaves() {
+        //get wave file
+        String filePath = "res/levels/" + level + "/waves.txt";
+
+        try {
+            File fp = new File(filePath);
+            Scanner myReader = new Scanner(fp);
+            while (myReader.hasNextLine()) {
+                String[] waveInfo = myReader.nextLine().split(",");
+
+                if (waves.size() == Integer.parseInt(waveInfo[0])) {
+                    waves.lastElement().updateWave(waveInfo);
+                } else {
+                    waves.add(new Wave(level, waveInfo));
+                }
+            }
+            myReader.close();
+
+        } catch (FileNotFoundException e) {
+            //print error if no file found
+            e.printStackTrace();
+        }
     }
 }

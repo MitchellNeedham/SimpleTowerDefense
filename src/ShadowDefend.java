@@ -76,16 +76,15 @@ public class ShadowDefend extends AbstractGame {
 
 
         //start wave when 'S' key is pressed, but only if a wave is not in progress
-        if (input.wasPressed(Keys.S) && level.isWaveComplete()) {
-            wave = level.startNextWave();
-            if (wave == null) {
-                Window.close();
-            }
+        if (input.wasPressed(Keys.S) && level.isLevelComplete()) {
+            level.start();
         }
 
         //increase timeScale
         if (input.wasPressed(Keys.L)) {
-            timeScale++;
+            if (timeScale < 5) {
+                timeScale++;
+            }
         }
         //decrease timeScale
         if (input.wasPressed(Keys.K)) {
@@ -95,7 +94,7 @@ public class ShadowDefend extends AbstractGame {
         }
 
         //if wave is in progress, update gameTime from start of wave and draw enemies
-        if (!level.isWaveComplete()) {
+        if (!level.isLevelComplete()) {
             wave.getTime().updateTime(timeScale);
             wave.drawEnemies(timeScale, map.getAllPolylines());
         }
