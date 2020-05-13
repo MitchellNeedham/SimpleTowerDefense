@@ -15,16 +15,7 @@ public class ShadowDefend extends AbstractGame {
      *
      * PLEASE NOTE: The res directory has been modified slightly
      * Instead, you'll find the files in res/levels/1
-     * and a new file called 'wave 1.csv' that contains all information regarding the enemies for that wave
-     *
-     * The underlying reasoning behind this change is to create clean future proofed code
-     * The number of levels is determined by the number of subdirectories in levels
-     * and the number of waves is determined by the number of 'wave %d.csv' files
-     *
-     * This allows levels to have different maps and paths, and also many waves
-     * without the need to set them all up within the code
-     *
-     * Therefore, to change/create levels and waves, all you need to do is edit the res files
+     * and a new file called 'waves.txt' that contains all information regarding the enemies for that wave
      *
      */
 
@@ -38,8 +29,12 @@ public class ShadowDefend extends AbstractGame {
     private Level level;
     private int currentLevel = 1;
     //private Wave wave;
-    private float timeScale = 1.0f;
+    private float timeScale = 0;
     private final Stack<Image> imageFiles = new Stack<>();
+
+    private float timeScaleSave = 1.0f;
+
+
 
     public static void main(String[] args) {
         // Create new instance of game and run it
@@ -56,6 +51,8 @@ public class ShadowDefend extends AbstractGame {
         System.out.println(maxLevels);
 
         this.map = level.createMap();
+
+
 
         getAllImageFiles();
     }
@@ -78,27 +75,34 @@ public class ShadowDefend extends AbstractGame {
         //start wave when 'S' key is pressed, but only if a wave is not in progress
         if (input.wasPressed(Keys.S) && !level.isInProgress()) {
             level.start();
-            //wave = level.startNextWave();
-            //if (wave == null) {
-            //    Window.close();
-            //}
+            timeScale = 1.0f;
         }
 
         //increase timeScale
-        if (input.wasPressed(Keys.L)) {
+        if (input.wasPressed(Keys.L) && timeScale != 0) {
             timeScale++;
         }
         //decrease timeScale
-        if (input.wasPressed(Keys.K)) {
-            if (timeScale > 1) {
+        if (input.wasPressed(Keys.K) && timeScale > 1 && timeScale != 0) {
                 timeScale--;
+        }
+
+        if (input.wasPressed(Keys.P)) {
+            if (timeScale > 0) {
+                timeScaleSave = timeScale;
+                timeScale = 0;
+            } else if (timeScale == 0) {
+                timeScale = timeScaleSave;
             }
+
         }
 
         //if wave is in progress, update gameTime from start of wave and draw enemies
-        if (level.isInProgress()) {
-            level.update(timeScale, map.getAllPolylines());
-        }
+
+        level.update(input, timeScale, map.getAllPolylines());
+
+
+
 
         //if level is complete, start new level
         //if no more levels, close window and exit game

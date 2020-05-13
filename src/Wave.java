@@ -1,9 +1,9 @@
-import java.io.File;
-import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+
 import bagel.util.Point;
 
 
@@ -39,14 +39,16 @@ public class Wave {
         //spawnEnemies();
     }
 
+    /**
+     * Creates and adds enemies to Set 'Enemies'
+     * @param enemyData String array containing information about enemies in wave
+     */
     public void addEnemies(String[] enemyData) {
-
         int enemyCount = Integer.parseInt(enemyData[2]);
-        int i = 0;
+        int i;
         for (i = 0; i < enemyCount; i++) {
             Enemies.add(new Slicer(totalDelay, enemyData[3]));
             totalDelay += Integer.parseInt(enemyData[4]);
-            System.out.println(totalDelay);
         }
     }
 
@@ -54,48 +56,15 @@ public class Wave {
         totalDelay += delay;
     }
 
+    /**
+     * Starts spawning enemies in wave
+     */
     public void startWave() {
-        System.out.println(waveNumber);
         gameTime = new Time();
         inProgress = true;
         spawning = true;
     }
 
-    //project 1 stuff below//
-
-    /**
-     * Reads file containing data for the wave and creates the appropriate enemy with parameters
-
-    private void spawnEnemies() {
-        //get wave file
-        String filePath = FILE_PATH + levelNumber + FILE_NAME + waveNumber + FILE_EXT;
-
-        try {
-            File fp = new File(filePath);
-            Scanner myReader = new Scanner(fp);
-            while (myReader.hasNextLine()) {
-                Enemy enemy = null;
-
-                //save enemy information
-                String[] enemyInfo = myReader.nextLine().split(splitByCSV);
-
-                //create new slicer enemy type
-                if (enemyInfo[0].equals(ENEMY_SLICER)) {
-                    enemy = new Slicer(Float.parseFloat(enemyInfo[2]), Float.parseFloat(enemyInfo[1]));
-                }
-
-                //add enemy to enemy set
-                if (enemy != null) {
-                    Enemies.add(enemy);
-                }
-            }
-            myReader.close();
-
-        } catch (FileNotFoundException e) {
-            //print error if no file found
-            e.printStackTrace();
-        }
-    }*/
 
     /**
      * Run through list of enemies and awakens them after their spawn delay time has elapsed
@@ -114,7 +83,7 @@ public class Wave {
                 enemy.awake();
             }
             //draw enemies
-            if (enemy.getIndex() < points.get(0).size() && enemy.isActive()) {
+            if (enemy.getIndex() < points.get(0).size() && enemy.isActive() && !enemy.isDestroyed()) {
                 enemy.draw(timeScale, points.get(0).get(enemy.getIndex()).asVector());
             } else if (enemy.getIndex() == points.get(0).size()) {
                 enemy.destroy();
@@ -147,4 +116,21 @@ public class Wave {
     public boolean isSpawning() {
         return spawning;
     }
+
+    /**
+     * Creates list of all enemies in wave currently on screen
+     * @return List of enemies on screen
+     */
+    public List<Enemy> getEnemiesOnScreen() {
+        List<Enemy> enemiesOnScreen = new ArrayList<>();
+        for (Enemy enemy : Enemies) {
+            if (enemy.isActive() && !enemy.isDestroyed()) {
+                enemiesOnScreen.add(enemy);
+            }
+        }
+
+        return enemiesOnScreen;
+    }
+
+
 }

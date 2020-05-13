@@ -1,4 +1,5 @@
 import bagel.*;
+import bagel.util.Point;
 import bagel.util.Vector2;
 import java.lang.Math;
 
@@ -37,9 +38,8 @@ public class Enemy {
     public void draw(float timeScale, Vector2 nextPoint) {
 
         //initialise position as nextPoint which will always be the first point in polyline
-        if (position == null) {
-            position = nextPoint;
-        }
+        if (position == null) position = nextPoint;
+
 
         //if enemy is within (movementSpeed * timeScale) pixels (i.e the closest position enroute to nextPoint)
         //change the point enemy is heading towards and draw enemy at nextPoint
@@ -61,58 +61,38 @@ public class Enemy {
         //add moveVector to position
         position = position.add(moveVector);
 
-        //get angle of path
-        angle = Math.atan2(moveVector.y, moveVector.x);
+        if (timeScale > 0) angle = Math.atan2(moveVector.y, moveVector.x);
+
         DrawOptions rotate = new DrawOptions().setRotation(angle);
 
         //draw enemy
         img.draw(position.x, position.y, rotate);
     }
 
-    /**
-     * returns an index which determines which point in the points list the enemy is moving towards
-     * @return index in points list
-     */
     public int getIndex() {
         return pointsIndex;
     }
 
-    /**
-     * @return return boolean if enemy is active
-     */
     public boolean isActive() {
         return active;
     }
 
-    /**
-     * awakens enemy and allows it to move
-     */
     public void awake() {
         active = true;
     }
 
-    /**
-     * getter for spawnDelay
-     * @return time to be elapsed before enemy can spawn
-     */
     public float getSpawnDelay() {
         return spawnDelay;
     }
 
-    /**
-     * set destroyed to true (stop drawing enemy)
-     */
     public void destroy() {
         this.destroyed = true;
     }
 
-    /**
-     * getter for destroyed boolean
-     * @return boolean if enemy destroyed
-     */
-    public boolean isDestroyed() {
-        return destroyed;
-    }
+    public boolean isDestroyed() { return destroyed; }
 
+    public Point getPosition() { return position.asPoint(); }
+
+    // TODO: add decrease health function and split function
 
 }

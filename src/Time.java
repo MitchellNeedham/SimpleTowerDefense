@@ -18,7 +18,7 @@ public final class Time {
     }
 
     /**
-     * @return total in game time since Time object creared
+     * @return total in game time since Time object created
      */
     public long getTotalGameTime() {
         return totalGameTime;
