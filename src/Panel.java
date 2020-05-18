@@ -1,17 +1,18 @@
+import bagel.DrawOptions;
 import bagel.Font;
 import bagel.Image;
-import bagel.Input;
+import bagel.util.Colour;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Panel {
 
+    private static final String DEFAULT_COLOUR = "#FFFFFF";
     private final int xPos;
     private final int yPos;
     private final Image backgroundImg;
-    private final Map<String, int[]> text = new HashMap<>();
-    private final Map<Clickable, String> clickable = new HashMap<>();
+    private final Map<String, Text> text = new HashMap<>();
+    private final List<Clickable> clickable = new ArrayList<>();
     private static final String FONT_FILE = "res/fonts/DejaVuSans-Bold.ttf";
     private final Map<String, Font> fonts = new HashMap<>();
 
@@ -28,11 +29,6 @@ public class Panel {
         this.yPos = y;
         this.backgroundImg = new Image(filePath);
 
-        // initialise fonts
-        // TODO: improve management of fonts
-        fonts.put("small", new Font(FONT_FILE, 16));
-        fonts.put("medium", new Font(FONT_FILE, 20));
-        fonts.put("large", new Font(FONT_FILE, 48));
     }
 
     /**
@@ -44,28 +40,18 @@ public class Panel {
         backgroundImg.drawFromTopLeft(xPos, yPos);
 
         // draw each text object in text map
-        text.forEach((t, pos) -> {
-            String[] textSplit = t.split(">");
-            fonts.get(textSplit[0]).drawString(textSplit[1], pos[0], pos[1]);
-        });
+        text.forEach((key, t) -> t.draw());
 
         // draw clickable objects and any text
-        clickable.forEach((c, txt) -> {
-            double[] pos = c.getPos();
-            String[] textSplit = txt.split(">");
-            double textWidth = fonts.get(textSplit[0]).getWidth(textSplit[1]);
-            c.draw();
-            fonts.get(textSplit[0]).drawString(textSplit[1], pos[0] - textWidth/2, pos[1] + 45);
-        });
+        clickable.forEach(Clickable::draw);
     }
 
     /**
      * Add clickable object to panel
      * @param object Clickable object
-     * @param textContent text to be displayed underneath
      */
-    protected void addClickable(Clickable object, String textContent) {
-        clickable.put(object, textContent);
+    protected void addClickable(Clickable object) {
+        clickable.add(object);
     }
 
     /**
@@ -74,19 +60,20 @@ public class Panel {
      * @param x centre x-coordinate of text
      * @param y centre y-coordinate of text
      */
-    protected void addText(String textContent, int x, int y) {
-        text.put(textContent, new int[]{x, y});
+    protected void addText(String type, double x, double y, String textContent, Font font) {
+        text.put(type, new Text(font, textContent, x, y));
     }
 
     /**
      * Updates text (to be redesigned)
-     * @param oldText String containing current text
+     * @param type String containing current text
      * @param newText String containing updated text
      */
-    public void updateText(String oldText, String newText) {
-        int[] pos = text.get(oldText);
-        text.put(newText, pos);
-        text.remove(oldText);
+    public void updateText(String type, String newText) {
+        text.get(type).updateText(newText);
     }
+
+
+
 
 }

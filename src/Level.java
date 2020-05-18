@@ -1,8 +1,7 @@
 
-import bagel.Input;
-import bagel.MouseButtons;
-import bagel.Window;
+import bagel.*;
 import bagel.map.TiledMap;
+import bagel.util.Colour;
 import bagel.util.Point;
 import bagel.util.Vector2;
 
@@ -18,6 +17,9 @@ import java.util.stream.Stream;
 
 public class Level {
 
+
+    private final static String TEXT_GREEN = "#00FF00";
+    private final static String TEXT_RED = "#FF0000";
     private final static String MAP_PATH = "res/levels/";
     private final static String MAP_EXT = ".tmx";
     private static String MAP_FILE;
@@ -30,6 +32,8 @@ public class Level {
 
     private static final String BUY_PANEL_IMAGE = "res/images/buypanel.png";
     private static final String STATUS_PANEL_IMAGE = "res/images/statuspanel.png";
+    private static final int SLICER_CHILDREN = 2;
+    private static final int SLICER_CHILDREN_SPAWN_DIST = 10;
     private final Panel buyPanel;
     private final Panel statusPanel;
 
@@ -45,6 +49,9 @@ public class Level {
     private final Stack<Tower> towers = new Stack<>();
 
     private Tower dragActive = null;
+
+    private List<Point> blockedPoints = new ArrayList<>();
+    private List<Line> blockedLines = new ArrayList<>();
 
     /**
      * Level constructor
@@ -64,16 +71,10 @@ public class Level {
         int i;
         for (i = 0; i < towerFiles.length; i++) {
             towerButtons.add(new TowerButton(towerFiles[i], TOWER_BUTTON_POSITION[0] + TOWER_BUTTON_OFFSET_X * i,
-                    TOWER_BUTTON_POSITION[1]));
-            buyPanel.addClickable(towerButtons.get(i), "medium>$" + towerPrices[i]);
+                    TOWER_BUTTON_POSITION[1], towerPrices[i]));
+            buyPanel.addClickable(towerButtons.get(i));
         }
-
-        buyPanel.addText("small>Key bindings:", 500, 15);
-        buyPanel.addText("small>S - Start Wave", 500, 35);
-        buyPanel.addText("small>L - Increase Timescale", 500, 55);
-        buyPanel.addText("small>K - Decrease Timescale", 500, 75);
-        buyPanel.addText("small>P - Pause Game", 500, 95);
-        buyPanel.addText("large>$" + money, 800, 65);
+        buyPanel.addText("money", 500, 50, "&" + money, new Font("res/fonts/DejaVuSans-Bold.ttf", 48));
     }
 
     /**
@@ -122,20 +123,23 @@ public class Level {
      * @param points polylines defined by map
      */
     public void update(Input input, float timeScale, List<List<Point>> points) {
+
+
+        // update projectiles
+        updateProjectiles(timeScale);
+
+        // update towers
+        updateTowers(input, timeScale, points);
+
         // update enemies
         if (inProgress) {
             updateEnemies(timeScale, points);
         }
 
         // update panels
+        updateBuyPanelText();
         buyPanel.update();
         statusPanel.update();
-
-        // update projectiles
-        updateProjectiles(timeScale);
-
-        // update towers
-        updateTowers(input, timeScale);
 
         // create tower from buy panel
         createTower(input);
@@ -177,23 +181,46 @@ public class Level {
                 continue;
             }
 
-            // update positions
-            pr.update(timeScale);
-
-            // if off screen or destroyed, remove from array for garbage collector
-            if (pr.isDestroyed() || pr.isOffScreen()) {
-                p.remove();
-            }
-
             // if projectile is explosive, destroy enemies within area of effect
-            if (pr.getClass() == ExplosiveProjectile.class) {
-                for (Enemy enemy : getEnemiesOnScreen()) {
+
+            for (Enemy enemy : getEnemiesOnScreen()) {
+                if (pr.getClass() == ExplosiveProjectile.class) {
                     if (((ExplosiveProjectile) pr).enemyInRadius(enemy.getPosition().asVector())) {
                         enemy.destroy();
                     }
                 }
+                if (pr.getClass() == StandardProjectile.class) {
+
+                    double dmg = ((StandardProjectile) pr).hasHitEnemy(enemy.getPosition());
+                    if (dmg == 0) {
+                        continue;
+                    }
+                    if (enemy.destroyedByDamage(dmg)){
+                        this.money += enemy.getReward();
+                        if (enemy.getType().endsWith("slicer")) {
+                            int index = ((Slicer) enemy).getTypes().indexOf(enemy.getType()) - 1;
+                            if (index < 0) {
+                                continue;
+                            }
+                            Point newPos = enemy.getPosition();
+                            int i;
+                            for (i = 0; i < SLICER_CHILDREN; i++) {
+                                waves.get(currentWave).addEnemy(
+                                        new Slicer(newPos, ((Slicer) enemy).getTypes().get(index), enemy.getIndex()));
+                                newPos = newPos.asVector().add(enemy.getMoveVector().mul(SLICER_CHILDREN_SPAWN_DIST / (timeScale * SLICER_CHILDREN))).asPoint();
+                            }
+                        }
+                    }
+                }
+            }
+            // if off screen or destroyed, remove from array for garbage collector
+            if (pr.isDestroyed() || pr.isOffScreen()) {
+                p.remove();
+            } else {
+                pr.update(timeScale);
             }
         }
+
     }
 
     /**
@@ -201,12 +228,17 @@ public class Level {
      * @param input user define input
      * @param timeScale game speed multiplier
      */
-    private void updateTowers(Input input, float timeScale) {
+    private void updateTowers(Input input, float timeScale, List<List<Point>> points) {
         // remove tower if it is off screen
         towers.removeIf(Tower::isOffScreen);
 
 
+
         towers.forEach(tower -> {
+
+            if (tower instanceof Clickable) {
+                ((Clickable) tower).hover(input);
+            }
 
             // determine target for tower
             Enemy target = null;
@@ -224,8 +256,9 @@ public class Level {
                         target = enemy;
 
                     // else if enemy is further in map, set as new target
-                    } else if (enemy.getIndex() > target.getIndex() &&
-                            distance > target.getPosition().distanceTo(tower.getPosition())) {
+                    } else if (enemy.getIndex() > target.getIndex() || enemy.getIndex() >= target.getIndex() &&
+                            enemy.getPosition().distanceTo(points.get(0).get(enemy.getIndex()))
+                                    < target.getPosition().distanceTo(points.get(0).get(enemy.getIndex()))) {
                         target = enemy;
                     }
                 }
@@ -267,32 +300,61 @@ public class Level {
                 if (tb.getBoundingBox().isMouseOver(input)) {
 
                     // create new tower centred at mouse location
-                    switch (tb.getTowerType()) {
-                        case "tank" -> {
-                            Tower newTower = new Tank(input.getMouseX(), input.getMouseY());
-                            towers.add(newTower);
-                            dragActive = newTower;
-                        }
-                        case "supertank" -> {
-                            Tower newTower = new SuperTank(input.getMouseX(), input.getMouseY());
-                            towers.add(newTower);
-                            dragActive = newTower;
-                        }
-                        case "airsupport" -> {
-                            Tower newTower = new AirSupport(input.getMouseX(), input.getMouseY(), planeOrientation);
-                            towers.add(newTower);
-                            dragActive = newTower;
-                            planeOrientation += Math.PI/2;
+                    if (tb.isPurchasable()) {
+                        switch (tb.getTowerType()) {
+                            case "tank" -> {
+                                Tower newTower = new Tank(input.getMouseX(), input.getMouseY());
+                                towers.add(newTower);
+                                dragActive = newTower;
+                                money -= newTower.getCost();
+                            }
+                            case "supertank" -> {
+                                Tower newTower = new SuperTank(input.getMouseX(), input.getMouseY());
+                                towers.add(newTower);
+                                dragActive = newTower;
+                                money -= newTower.getCost();
+                            }
+                            case "airsupport" -> {
+                                Tower newTower = new AirSupport(input.getMouseX(), input.getMouseY(), planeOrientation);
+                                towers.add(newTower);
+                                dragActive = newTower;
+                                planeOrientation = (planeOrientation + Math.PI/2) % (Math.PI);
+                                money -= newTower.getCost();
+                            }
                         }
                     }
                 }
             }
         }
 
-        // if left mouse button pressed again, place tower
-        else if (input.wasPressed(MouseButtons.LEFT) && dragActive != null) {
-            dragActive.place(input.getMouseX(), input.getMouseY());
-            dragActive = null;
+
+        else if (dragActive != null) {
+
+            // if not over blocked positions, place tower
+            if (!dragActive.isBlocked(blockedPoints, blockedLines)) {
+                if (input.wasPressed(MouseButtons.LEFT)) {
+                    dragActive.place(input.getMouseX(), input.getMouseY());
+
+                    // add tower position to blocked points
+                    blockedPoints.add(dragActive.getPosition());
+                    dragActive = null;
+                }
+            }
+
+            // if escape key is pressed, cancel placing tower and refund money lost
+            if (input.wasPressed(Keys.ESCAPE)) {
+                money += dragActive.getCost();
+                dragActive = null;
+                towers.pop();
+            }
+        }
+    }
+
+    // update test in buy panel
+    private void updateBuyPanelText() {
+        buyPanel.updateText("money", "$" + money);
+        for (TowerButton tb : towerButtons) {
+            tb.setPurchasable(money);
         }
     }
 
@@ -302,11 +364,7 @@ public class Level {
      */
     private List<Enemy> getEnemiesOnScreen() {
         List<Enemy> enemiesOnScreen = new ArrayList<>();
-        for (Wave wave : waves) {
-            if (!wave.getEnemiesOnScreen().isEmpty()) {
-                enemiesOnScreen.addAll(wave.getEnemiesOnScreen());
-            }
-        }
+        for (Wave wave : waves) enemiesOnScreen.addAll(wave.getEnemiesOnScreen());
         return enemiesOnScreen;
     }
 
@@ -335,7 +393,17 @@ public class Level {
         }
 
         // return TiledMap object with new map
-        return new TiledMap(MAP_FILE);
+        TiledMap tm = new TiledMap(MAP_FILE);
+
+        tm.getAllPolylines().forEach(l -> {
+            int i;
+            for (i = 0; i < l.size() - 1; i++) {
+                blockedPoints.add(l.get(i));
+                blockedLines.add(new Line(l.get(i), l.get(i+1)));
+            }
+        });
+
+        return tm;
     }
 
 
@@ -350,4 +418,5 @@ public class Level {
     public boolean isInProgress() {
         return inProgress;
     }
+
 }

@@ -2,6 +2,8 @@ import bagel.*;
 import bagel.util.Colour;
 import bagel.util.Point;
 import bagel.util.Vector2;
+
+import java.util.List;
 import java.util.Random;
 
 public class AirSupport implements Tower {
@@ -11,7 +13,7 @@ public class AirSupport implements Tower {
     private static final Image TOWER_IMAGE = new Image("res/images/airsupport.png");
     private static final Image PROJECTILE_IMAGE = new Image("res/images/tank_projectile.png");
     private static final double PROJECTILE_SPEED = 2.5;
-    private static final double[] FIRE_RATE_RANGE = {0, 1000};
+    private static final double[] FIRE_RATE_RANGE = {0, 2500};
     private static final double RANGE = 0;
     private static final double EXPLOSION_RADIUS = 200;
     private static final double MODIFIER = 0.90;
@@ -21,6 +23,7 @@ public class AirSupport implements Tower {
     private Time time = null;
     private final double angle;
     private final DrawOptions rotate;
+    private double cost = 500;
 
     public AirSupport(double x, double y, double angle) {
         this.x = x;
@@ -96,6 +99,7 @@ public class AirSupport implements Tower {
     public Projectile fire(Enemy target) {
         // generate new random fire rate
         fireRate = new Random().nextDouble() * (FIRE_RATE_RANGE[1] - FIRE_RATE_RANGE[0]) + FIRE_RATE_RANGE[0];
+        System.out.println(fireRate);
 
         // reset time
         time = new Time();
@@ -130,11 +134,20 @@ public class AirSupport implements Tower {
     }
 
     @Override
+    public double getCost() {
+        return cost;
+    }
+
+    @Override
     public double getRange() {
         return RANGE;
     }
 
     @Override
     public void updateRotation(double angle) {
+    }
+
+    public boolean isBlocked(List<Point> blockedPoints, List<Line> blockedLines) {
+        return false;
     }
 }

@@ -25,7 +25,7 @@ public class ShadowDefend extends AbstractGame {
     private final static String LEVEL_PATH = "res/levels/";
 
     private TiledMap map;
-    private final int maxLevels;
+    private int maxLevels;
     private Level level;
     private int currentLevel = 1;
     //private Wave wave;
@@ -48,11 +48,8 @@ public class ShadowDefend extends AbstractGame {
         //create level where waves are created and run
         this.level = new Level(currentLevel);
         this.maxLevels = getMaxLevels();
-        System.out.println(maxLevels);
 
         this.map = level.createMap();
-
-
 
         getAllImageFiles();
     }
@@ -120,6 +117,8 @@ public class ShadowDefend extends AbstractGame {
             //reset timeScale
             timeScale = 1;
         }
+
+
     }
 
     /**

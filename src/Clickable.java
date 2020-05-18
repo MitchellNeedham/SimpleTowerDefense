@@ -6,6 +6,10 @@ public interface Clickable {
 
     double[] getPos();
 
+    void hover(Input input);
+
+    void click (Input input);
+
     void draw();
 
 

@@ -3,9 +3,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
-
 import bagel.util.Point;
-
 
 public class Wave {
     private final static String FILE_PATH = "res/levels/";
@@ -13,7 +11,6 @@ public class Wave {
     private final static String FILE_EXT = ".csv";
     private final static String ENEMY_SLICER = "slicer";
     private final static String splitByCSV= ",";
-
     private Time gameTime;
     private final int waveNumber;
     private final int levelNumber;
@@ -50,6 +47,10 @@ public class Wave {
             Enemies.add(new Slicer(totalDelay, enemyData[3]));
             totalDelay += Integer.parseInt(enemyData[4]);
         }
+    }
+
+    public void addEnemy(Enemy enemy) {
+        Enemies.add(enemy);
     }
 
     public void addDelay(int delay) {
