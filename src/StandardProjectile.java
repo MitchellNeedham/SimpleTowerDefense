@@ -9,7 +9,7 @@ public class StandardProjectile implements Projectile{
     private final Enemy target;
     private final double speed;
     private final Image projectileImg;
-    private Vector2 pos;
+    private Point pos;
     private Vector2 path;
     private boolean destroyed = false;
     private double damage;
@@ -22,12 +22,12 @@ public class StandardProjectile implements Projectile{
      * @param speed movement speed of projectile in pixels per frame
      * @param target enemy that projectile is locked onto
      */
-    public StandardProjectile(Image imgFile, Vector2 pos, double speed, double damage, Enemy target) {
-        this.projectileImg = imgFile;
+    public StandardProjectile(String imgFile, Point pos, double speed, double damage, Enemy target) {
+        this.projectileImg = new Image(imgFile);
         this.pos = pos;
         this.speed = speed;
         this.target = target;
-        this.path = pathToEnemy(pos, target.getPosition().asVector());
+        this.path = pathToEnemy(pos.asVector(), target.getPosition().asVector());
         this.damage = damage;
 
     }
@@ -39,12 +39,12 @@ public class StandardProjectile implements Projectile{
     public void update(float timeScale) {
         // get path vector from current position aiming at enemy
         if (!target.isDestroyed()) {
-            path = pathToEnemy(pos, target.getPosition().asVector());
+            path = pathToEnemy(pos.asVector(), target.getPosition().asVector());
         }
 
 
         // add path vector to position
-        pos = pos.add(path.mul(timeScale));
+        pos = pos.asVector().add(path.mul(timeScale)).asPoint();
 
         // draw projectile
 
@@ -79,7 +79,7 @@ public class StandardProjectile implements Projectile{
 
 
     public double hasHitEnemy(Point pos) {
-        if (pos.distanceTo(this.pos.asPoint()) < MIN_HIT_DIST && !this.destroyed) {
+        if (pos.distanceTo(this.pos) < MIN_HIT_DIST && !this.destroyed) {
             this.destroyed = true;
             return damage;
         }

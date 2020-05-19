@@ -1,7 +1,6 @@
 
 import bagel.*;
 import bagel.map.TiledMap;
-import bagel.util.Colour;
 import bagel.util.Point;
 import bagel.util.Vector2;
 

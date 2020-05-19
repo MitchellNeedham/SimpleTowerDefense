@@ -8,14 +8,14 @@ import java.util.*;
 public class Panel {
 
     private static final String DEFAULT_COLOUR = "#FFFFFF";
-    private final int xPos;
-    private final int yPos;
+    private final double xPos;
+    private final double yPos;
     private final Image backgroundImg;
     private final Map<String, Text> text = new HashMap<>();
     private final List<Clickable> clickable = new ArrayList<>();
     private static final String FONT_FILE = "res/fonts/DejaVuSans-Bold.ttf";
     private final Map<String, Font> fonts = new HashMap<>();
-
+    private final BoundingBox bb;
     // TODO: improve panel using OOP
 
     /**
@@ -24,10 +24,11 @@ public class Panel {
      * @param y y-coordinate at top left of panel
      * @param filePath background image of panel
      */
-    protected Panel(int x, int y, String filePath) {
+    protected Panel(double x, double y, String filePath) {
         this.xPos = x;
         this.yPos = y;
         this.backgroundImg = new Image(filePath);
+        bb = new BoundingBox(x, y, backgroundImg.getWidth(), backgroundImg.getHeight());
 
     }
 
@@ -73,7 +74,7 @@ public class Panel {
         text.get(type).updateText(newText);
     }
 
-
-
-
+    public BoundingBox getBoundingBox() {
+        return bb;
+    }
 }
