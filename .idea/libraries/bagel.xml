@@ -1,9 +1,0 @@
-<component name="libraryTable">
-  <library name="bagel">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/bagel.jar!/" />
-    </CLASSES>
-    <JAVADOC />
-    <SOURCES />
-  </library>
-</component>
