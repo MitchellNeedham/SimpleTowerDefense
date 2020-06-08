@@ -7,15 +7,16 @@ import java.util.List;
 
 public class Enemy {
 
-    // z index for render
+    //-------------------------RENDER PRIORITIES-------------------------//
+
     private final int z_index;
 
+    //-------------------------ENEMY PROPERTIES-------------------------//
+
     private final String imgPath;
-
-
     private final double movementSpeed;
     private final float spawnDelay;
-    private int pointsIndex = 0; // the point that the enemy is on path towards
+    private int pointsIndex = 0; // the indexed point on the polyline that the enemy is on path towards
     private Vector2 position;
     private boolean active = false;
     private boolean destroyed = false;

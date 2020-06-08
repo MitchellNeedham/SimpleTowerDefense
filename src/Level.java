@@ -16,16 +16,19 @@ import java.util.stream.Stream;
 
 public class Level {
 
-    private final static int INITIAL_LIVES = 50; // initial lives
 
-    // status ints
+
+    //-------------------------GAME STATES-------------------------//
+
     private final static int STATE_WAITING = 0;
     private final static int STATE_IN_PROGRESS = 1;
     private final static int STATE_PLACING = 2;
     private final static int STATE_WIN = 3;
 
-    //
-    private final static String[] STATUS = new String[] {"Awaiting Start", "Wave In Progress", "Placing", "Winner!"};
+
+    //-------------------------INITIAL LEVEL PROPERTIES-------------------------//
+
+    private final static int INITIAL_LIVES = 50;
     private final static int INITIAL_MONEY = 500;
     private final static int REWARD_MONEY = 150;
 
@@ -33,7 +36,6 @@ public class Level {
     private final static String MAP_EXT = ".tmx";
     private static String MAP_FILE;
 
-    private final SortedSet<Integer> statusSet = new TreeSet<>();
     private final int level;
     private int currentWave = 0;
     private final Stack<Wave> waves = new Stack<>();
@@ -71,23 +73,18 @@ public class Level {
         this.lives = INITIAL_LIVES;
 
 
-        // Create Panels
-        // TODO: improve how panels are created and updated
         Panel buyPanel = ShadowDefend.getBuyPanel();
         Panel statusPanel = ShadowDefend.getStatusPanel();
-        updateStatus(STATE_WAITING);
+        ShadowDefend.updateStatus(STATE_WAITING);
 
-        int i;
-        for (i = 0; i < towerFiles.length; i++) {
+        for (int i = 0; i < towerFiles.length; i++) {
             towerButtons.add(new TowerButton(towerFiles[i], TOWER_BUTTON_POSITION[0] + TOWER_BUTTON_OFFSET_X * i,
                     TOWER_BUTTON_POSITION[1], towerPrices[i]));
             buyPanel.addClickable(towerButtons.get(i));
         }
-        buyPanel.addText("money", 500, 50, "&" + money, new Font("res/fonts/DejaVuSans-Bold.ttf", 48));
-        statusPanel.addText("lives", 970, 16, "Lives: " + lives, new Font("res/fonts/DejaVuSans-Bold.ttf", 16));
-        statusPanel.addText("timescale", 200, 16, "Timescale: ", new Font("res/fonts/DejaVuSans-Bold.ttf", 16));
-        statusPanel.addText("wave", 40, 16, "Wave: ", new Font("res/fonts/DejaVuSans-Bold.ttf", 16));
-        statusPanel.addText("status", 400, 16, "Status: " + STATUS[statusSet.last()], new Font("res/fonts/DejaVuSans-Bold.ttf", 16));
+        statusPanel.updateText(ShadowDefend.TIMESCALE, ShadowDefend.TIMESCALE + ShadowDefend.getTimeScale());
+        statusPanel.updateText(ShadowDefend.LIVES, ShadowDefend.LIVES + lives);
+        statusPanel.updateText(ShadowDefend.WAVE, ShadowDefend.WAVE + currentWave);
 
     }
 
@@ -99,7 +96,7 @@ public class Level {
     protected void start() {
         waves.get(currentWave).startWave();
         waveInProgress = true;
-        updateStatus(STATE_IN_PROGRESS);
+        ShadowDefend.updateStatus(STATE_IN_PROGRESS);
     }
 
     /**
@@ -175,7 +172,7 @@ public class Level {
             currentWave ++;
             money += REWARD_MONEY * currentWave;
             waveInProgress = false;
-            removeStatus(1);
+            ShadowDefend.removeStatus(1);
         }
         for (Enemy enemy : currWave.getEnemiesOnScreen()) {
             if (enemy.getIndex() >= points.get(0).size()) {
@@ -278,7 +275,8 @@ public class Level {
                         target = enemy;
 
                     // else if enemy is further in map, set as new target
-                    } else if (enemy.getIndex() > target.getIndex() || enemy.getIndex() >= target.getIndex() &&
+                    } else if (enemy.getIndex() > target.getIndex() ||
+                            enemy.getIndex() >= target.getIndex() &&
                             enemy.getPosition().distanceTo(points.get(0).get(enemy.getIndex()))
                                     < target.getPosition().distanceTo(points.get(0).get(enemy.getIndex()))) {
                         target = enemy;
@@ -362,7 +360,7 @@ public class Level {
 
 
         else if (dragActive != null) {
-            updateStatus(STATE_PLACING);
+            ShadowDefend.updateStatus(STATE_PLACING);
             // if not over blocked positions, place tower
             if (dragActive.canBePlaced(blockedPoints, blockedLines)) {
                 if (input.wasPressed(MouseButtons.LEFT)) {
@@ -374,7 +372,7 @@ public class Level {
                 }
             }
         } else {
-            removeStatus(STATE_PLACING);
+            ShadowDefend.removeStatus(STATE_PLACING);
         }
     }
 
@@ -428,21 +426,20 @@ public class Level {
     private void updatePanelText(float timeScale) {
         Panel buyPanel = ShadowDefend.getBuyPanel();
         Panel statusPanel = ShadowDefend.getStatusPanel();
-        buyPanel.updateText("money", "$" + money);
+        buyPanel.updateText(ShadowDefend.MONEY, ShadowDefend.MONEY + money);
         for (TowerButton tb : towerButtons) {
             tb.setPurchasable(money);
         }
 
         if (timeScale > 1) {
-            statusPanel.updateTextColour("timescale", Colour.GREEN);
+            statusPanel.updateTextColour(ShadowDefend.TIMESCALE, Colour.GREEN);
         } else if (timeScale == 1) {
-            statusPanel.updateTextColour("timescale", Colour.WHITE);
+            statusPanel.updateTextColour(ShadowDefend.TIMESCALE, Colour.WHITE);
         }
 
-        statusPanel.updateText("timescale", "Timescale " + timeScale);
-        statusPanel.updateText("lives", "Lives: " + lives);
-        statusPanel.updateText("wave", "Wave: " + (currentWave + 1));
-        statusPanel.updateText("status", "Status: " + STATUS[statusSet.last()] );
+        statusPanel.updateText(ShadowDefend.TIMESCALE, ShadowDefend.TIMESCALE + timeScale);
+        statusPanel.updateText(ShadowDefend.LIVES, ShadowDefend.LIVES + lives);
+        statusPanel.updateText(ShadowDefend.WAVE, ShadowDefend.WAVE + (currentWave + 1));
 
     }
 
@@ -452,10 +449,10 @@ public class Level {
      */
     public boolean isLevelComplete() {
         if (waves.stream().allMatch(wave -> Boolean.TRUE.equals(wave.isWaveComplete()))) {
-            updateStatus(STATE_WIN);
+            ShadowDefend.updateStatus(STATE_WIN);
             return true;
         } else {
-            removeStatus(STATE_WIN);
+            ShadowDefend.removeStatus(STATE_WIN);
         }
         return false;
     }
@@ -467,17 +464,6 @@ public class Level {
             System.out.println(2);
         }
         return waveInProgress;
-    }
-
-    public void updateStatus(int status) {
-
-        statusSet.add(status);
-        System.out.println(statusSet.last());
-
-    }
-
-    public void removeStatus(int status) {
-        statusSet.remove(status);
     }
 
     public int getLevel() {

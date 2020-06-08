@@ -2,10 +2,13 @@ import bagel.*;
 import bagel.Window;
 import bagel.map.TiledMap;
 import bagel.Image;
+import bagel.util.Point;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.SortedSet;
 import java.util.Stack;
+import java.util.TreeSet;
 import java.util.stream.Stream;
 
 public class ShadowDefend extends AbstractGame {
@@ -18,6 +21,34 @@ public class ShadowDefend extends AbstractGame {
      * and a new file called 'waves.txt' that contains all information regarding the enemies for that wave
      *
      */
+
+    private static final SortedSet<Integer> STATUS_SET = new TreeSet<>();
+    private final static String[] STATUS_TYPE = new String[] {"Awaiting Start", "Wave In Progress", "Placing", "Winner!"};
+    private final static int INITIAL_STATUS = 0;
+    private static final String FONT_FILE = "res/fonts/DejaVuSans-Bold.ttf";
+
+
+    //-------------------------BUY PANEL ITEMS-------------------------//
+
+    private static final int BUY_PANEL_FONT_SIZE = 48;
+    public final static String MONEY = "$ ";
+    private final static Point MONEY_POS = new Point(800, 60);
+
+
+    //-------------------------STATUS PANEL ITEMS-------------------------//
+
+    private static final int STATUS_PANEL_FONT_SIZE = 16;
+    public final static String LIVES = "Lives: ";
+    private final static Point LIVES_POS = new Point(970, 16);
+    public final static String TIMESCALE = "Timescale: ";
+    private final static Point TIMESCALE_POS = new Point(200, 16);
+    public final static String WAVE = "Wave: ";
+    private final static Point WAVE_POS = new Point(40, 16);
+    public final static String STATUS = "Status: ";
+    private final static Point STATUS_POS = new Point(400, 16);
+
+
+
 
     private final static int OFF_SCREEN_X = -100;
     private final static int OFF_SCREEN_Y = -100;
@@ -54,6 +85,8 @@ public class ShadowDefend extends AbstractGame {
         // TODO: create endgame panel
         buyPanel = new Panel(0,0, BUY_PANEL_IMAGE);
         statusPanel = new Panel(0, 743, STATUS_PANEL_IMAGE);
+        initPanels();
+        updateStatus(INITIAL_STATUS);
 
         // create level
         this.level = new Level(currentLevel);
@@ -69,6 +102,8 @@ public class ShadowDefend extends AbstractGame {
 
         // get all image files
         getAllImageFiles(IMG_PATH);
+
+
     }
 
     /**
@@ -198,6 +233,25 @@ public class ShadowDefend extends AbstractGame {
         }
         return 0;
     }
+
+    public static void initPanels() {
+        buyPanel.addText(MONEY, MONEY_POS.x, MONEY_POS.y, "", new Font(FONT_FILE, BUY_PANEL_FONT_SIZE));
+        statusPanel.addText(LIVES, LIVES_POS.x, LIVES_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
+        statusPanel.addText(WAVE, WAVE_POS.x, WAVE_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
+        statusPanel.addText(STATUS, STATUS_POS.x, STATUS_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
+        statusPanel.addText(TIMESCALE, TIMESCALE_POS.x, TIMESCALE_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
+    }
+
+    public static void updateStatus(int status) {
+        STATUS_SET.add(status);
+        System.out.println(STATUS_TYPE[STATUS_SET.last()]);
+        statusPanel.updateText(STATUS, STATUS + STATUS_TYPE[STATUS_SET.last()]);
+    }
+
+    public static void removeStatus(int status) {
+        STATUS_SET.remove(status);
+    }
+
 
 
     public static Panel getBuyPanel() {

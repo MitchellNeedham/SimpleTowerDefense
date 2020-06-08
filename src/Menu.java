@@ -13,14 +13,22 @@ public class Menu {
 
     // Menu system for game
 
+    //-------------------------MENU SCREEN IDS-------------------------//
     private static final int GAME = 0;
     private static final int MAIN = 1;
     private static final int OPTIONS = 2;
     private static final int LEVEL_SELECT = 3;
 
+    //-------------------------RETURN TO MAIN MENU BUTTON-------------------------//
+
     private static final Point TOP_MENU_BUTTON_POS = new Point(Window.getWidth() - 50, 50);
     private static final Vector2 TOP_MENU_BUTTON_SIZE = new Vector2(40, 40);
 
+    //-------------------------MAIN SCREEN INITIALISATION-------------------------//
+
+
+
+    //-------------------------LEVEL SELECT INITIALISATION-------------------------//
     private static final int MAX_BUTTONS_PER_LINE = 3;
     private static final int LEVEL_BUTTON_WIDTH = 200;
     private static final int LEVEL_BUTTON_HEIGHT = 200;
@@ -28,10 +36,14 @@ public class Menu {
     private static final int X_OFFSET = 250;
     private static final int Y_OFFSET = 250;
 
+    //-------------------------OPTIONS INITIALISATION-------------------------//
+
+
+
 
     private static final Map<Integer, ArrayList<MenuItem>> MenuSections = new HashMap<>();
     private static int activeSection;
-    private static int level = 1;
+    private static int level = 1; // base level to load
 
     /**
      * Initialise menu screens and creates buttons

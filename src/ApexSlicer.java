@@ -4,10 +4,14 @@ import java.util.*;
 
 public class ApexSlicer extends Enemy {
 
-    // z index for rendering
+    //-------------------------RENDER PRIORITIES-------------------------//
+
     private static final int Z_INDEX = 7;
-    private static final double CHILDREN_SPAWN_DIST = 10;
+
+    //-------------------------SLICER PROPERTIES-------------------------//
+
     private static final String TYPE = "apexslicer";
+    private static final double CHILDREN_SPAWN_DIST = 10;
     private static final double SPEED = 0.2;
     private static final double HEALTH = 25.0;
     private static final double REWARD = 150.0;
