@@ -9,20 +9,30 @@ public class Bomber extends ActiveTower {
 
     // TODO: change name - it is a fighter plane silly
 
-    // Render job values
+    //-------------------------RENDER PRIORITIES-------------------------//
+
     private static final int RUNWAY_Z = 2;
     private static final int PLANE_Z = 8;
     private final static int OVERLAY_Z = 9;
     private final static int UNDERLAY_Z = 3;
 
-    // path overlay settings
+
+    //-------------------------INFO DISPLAY PROPERTIES-------------------------//
+
     private final static int PATH_LINE_THICKNESS = 5;
     private final static Colour PATH_LINE_COLOUR = new Colour(0, 0, 200, 0.3);
+    private static final Colour BLOCKED_COLOUR = new Colour(255, 0, 0, 0.5);
 
-    // base stats
-    private static final String TYPE = "bomber";
+
+    //-------------------------TOWER IMAGE FILES-------------------------//
+
     private static final String RUNWAY_IMAGE = "res/images/bomber/runway.png";
     private static final String PLANE_IMAGE = "res/images/bomber/main.png";
+
+
+    //-------------------------TOWER PROPERTIES-------------------------//
+
+    private static final String TYPE = "bomber";
     private static final double PROJECTILE_SPEED = 15;
     private static final double PROJECTILE_DAMAGE = 2;
     private static final double RANGE = 250;
@@ -31,8 +41,8 @@ public class Bomber extends ActiveTower {
     private static final double PATH_SIZE = 300;
     private static final double SPEED = 1.5;
 
-    // colour when it can't be placed
-    private static final Colour BLOCKED_COLOUR = new Colour(255, 0, 0, 0.5);
+
+    //------------------------------------------------------------//
 
     private final DrawOptions rotation;
     private Point planePos = new Point(0, 0);

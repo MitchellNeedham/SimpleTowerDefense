@@ -7,26 +7,37 @@ import java.util.Random;
 
 public class AirSupport implements Tower {
 
-    // render z indexes
+    //-------------------------RENDER PRIORITIES-------------------------//
+
     private static final int TOWER_Z = 7;
     private static final int UNDERLAY_Z = 6;
 
-    // position of tower
-    private Point pos;
 
-    // base stats of tower
+    //-------------------------TOWER IMAGE FILES-------------------------//
+
     private static final String TOWER_IMG = "res/images/airsupport/main.png";
     private static final Image TOWER_IMAGE = new Image("res/images/airsupport/main.png");
     private static final String PROJECTILE_IMAGE = "res/images/tank/projectile.png";
+
+
+    //-------------------------PROJECTILE PROPERTIES-------------------------//
+
     private static final double PROJECTILE_SPEED = 2.5;
     private static final double PROJECTILE_DAMAGE = 500;
+    private static final double EXPLOSION_RADIUS = 200;
+
+
+    //-------------------------TOWER PROPERTIES-------------------------//
+
     private static final double[] FIRE_RATE_RANGE = {0, 2500};
     private static final double RANGE = 0;
-    private static final double EXPLOSION_RADIUS = 200;
     private static final double MODIFIER = 0.90;
     private static final double LINE_PATH_THICKNESS = 5;
-    private double fireRate;
     private static final double SPEED = 5.0;
+
+    // position of tower
+    private Point pos;
+    private double fireRate;
     private boolean placing;
     private Time time = null;
     private final double angle;

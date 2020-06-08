@@ -7,34 +7,39 @@ import java.util.Random;
 
 public abstract class ActiveTower implements Tower, Clickable {
 
-    // render settings
+    //-------------------------RENDER PRIORITIES-------------------------//
+
     private final static int BASE_Z = 4;
     private final static int TOP_Z = 5;
     private final static int OVERLAY_Z = 6;
     private final static int UNDERLAY_Z = 3;
 
-    // positions of tower base and top (turret)
-    private Point towerPos;
-    private Point towerTopPos;
 
-    // type of tower
-    private final String type;
+    //-------------------------IMAGE FILE LOCATION AND FORMAT-------------------------//
 
     private static final String RES_PATH = "res/images/"; // image(s) path
     private static final String IMAGE_EXT = ".png"; // image extension
 
-    // colours to display information to user
+
+    //-------------------------TOWER STATE COLOURS-------------------------//
+
     private static final Colour RANGE_COLOUR = new Colour(0, 200, 0, 0.2); // colour of range radius
     private static final Colour HOVER_COLOUR = new Colour(255, 255, 255, 0.2); // colour of hover overlay
     private static final Colour BLOCKED_COLOUR = new Colour(255, 0, 0, 0.5); // colour of blocked overlay
 
-    // upgrade panel information
+
+    //-------------------------UPGRADE PANEL-------------------------//
+
     private static final String UPGRADE_PANEL = "res/images/panels/upgradepanel.png";
     private static final Point UPGRADE_PANEL_POS = new Point(Window.getWidth()-200f, 100);
     private Panel upgradePanel;
 
+    //-------------------------TOWER FILES AND DATA-------------------------//
     //TODO: implement upgrades
     // all of these will all be editable when upgrades are implemented
+    private Point towerPos;
+    private Point towerTopPos;
+    private final String type;
     private String tower;
     private String towerBase;
     private String towerTop;

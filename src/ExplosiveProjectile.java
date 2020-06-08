@@ -5,9 +5,15 @@ import bagel.util.Vector2;
 
 public class ExplosiveProjectile extends Projectile{
 
-    private static final Colour EXPLOSION_COLOUR = new Colour(160, 0, 0, 0.4);
-    private static final String EXPLOSION_TYPE = "circle";
+    //-------------------------RENDER PRIORITIES-------------------------//
+
     private static final int Z_INDEX = 4;
+
+    //-------------------------RENDER PRIORITIES-------------------------//
+
+    private static final Colour EXPLOSION_COLOUR = new Colour(0.9, 0, 0, 0.4);
+    private static final String EXPLOSION_TYPE = "circle";
+
     private final String imgFile;
     private Point pos;
     private final Vector2 path;
