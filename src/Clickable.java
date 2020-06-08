@@ -2,13 +2,11 @@ import bagel.Input;
 
 public interface Clickable {
 
-    //to do stuff with later
-
-    double[] getPos();
+    // TODO: sort out Clickables
 
     void hover(Input input);
 
-    void click (Input input);
+    void click(Input input);
 
     void draw();
 

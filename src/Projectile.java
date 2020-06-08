@@ -1,10 +1,36 @@
 import bagel.Window;
+import bagel.util.Point;
 
-public interface Projectile {
+public abstract class Projectile {
 
-    void update(float timeScale);
+    //TODO: clean up
 
-    boolean isDestroyed();
+    private Point pos;
+    private boolean destroyed;
 
-    boolean isOffScreen();
+    public Projectile(Point pos) {
+        this.pos = pos;
+    }
+
+    public void update(float timeScale) {
+
+    }
+
+    public boolean isOffScreen() {
+        return pos.x < 0 || pos.x > Window.getWidth() || pos.y < 0 || pos.y > Window.getHeight();
+    }
+
+
+    public boolean isDestroyed() {
+        return destroyed;
+    }
+
+    public void destroy() {
+        this.destroyed = true;
+    }
+
+    public void updatePos(Point pos) {
+        this.pos = pos;
+    }
+
 }

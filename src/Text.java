@@ -2,7 +2,7 @@ import bagel.DrawOptions;
 import bagel.Font;
 import bagel.util.Colour;
 
-public class Text {
+public class Text implements MenuItem {
 
     private static final Colour DEFAULT_COLOUR = new Colour(255, 255, 255);
     private final double x;
@@ -10,7 +10,6 @@ public class Text {
     private final Font font;
     private String textContent;
     private Colour colour;
-
 
     /**
      * Constructor for text object
@@ -27,8 +26,14 @@ public class Text {
         this.colour = DEFAULT_COLOUR;
     }
 
-    public void draw() {
+    public void drawAtTopLeft() {
         font.drawString(textContent, x, y, new DrawOptions().setBlendColour(colour));
+    }
+
+    @Override
+    public void draw() {
+        double width = font.getWidth(textContent);
+        font.drawString(textContent, x - width / 2, y, new DrawOptions().setBlendColour(colour));
     }
 
     public void updateText(String newText) {

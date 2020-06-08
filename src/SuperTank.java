@@ -13,7 +13,6 @@ public class SuperTank extends ActiveTower{
 
     /**
      * Constructor for Tank
-     *
      * @param x                 x-coordinate at centre of tank position
      * @param y                 y-coordinate at centre of tank position
      */

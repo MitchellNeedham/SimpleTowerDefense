@@ -1,33 +1,45 @@
 import bagel.*;
 import bagel.util.Colour;
 import bagel.util.Point;
-import bagel.util.Vector2;
 
 import java.util.List;
 import java.util.Random;
 
 public class AirSupport implements Tower {
 
-    private double x;
-    private double y;
-    private static final Image TOWER_IMAGE = new Image("res/images/airsupport.png");
-    private static final Image PROJECTILE_IMAGE = new Image("res/images/tank_projectile.png");
+    // render z indexes
+    private static final int TOWER_Z = 7;
+    private static final int UNDERLAY_Z = 6;
+
+    // position of tower
+    private Point pos;
+
+    // base stats of tower
+    private static final String TOWER_IMG = "res/images/airsupport/main.png";
+    private static final Image TOWER_IMAGE = new Image("res/images/airsupport/main.png");
+    private static final String PROJECTILE_IMAGE = "res/images/tank/projectile.png";
     private static final double PROJECTILE_SPEED = 2.5;
+    private static final double PROJECTILE_DAMAGE = 500;
     private static final double[] FIRE_RATE_RANGE = {0, 2500};
     private static final double RANGE = 0;
     private static final double EXPLOSION_RADIUS = 200;
     private static final double MODIFIER = 0.90;
+    private static final double LINE_PATH_THICKNESS = 5;
     private double fireRate;
     private static final double SPEED = 5.0;
     private boolean placing;
     private Time time = null;
     private final double angle;
     private final DrawOptions rotate;
-    private double cost = 500;
 
+    /**
+     * Constructor for AirSupport
+     * @param x x-position of tower
+     * @param y y-position of tower
+     * @param angle angle tower faces
+     */
     public AirSupport(double x, double y, double angle) {
-        this.x = x;
-        this.y = y;
+        this.pos = new Point(x, y);
         this.angle = angle;
         rotate = new DrawOptions().setRotation(angle);
         fireRate = new Random().nextDouble() * (FIRE_RATE_RANGE[1] - FIRE_RATE_RANGE[0]) + FIRE_RATE_RANGE[0];
@@ -47,23 +59,27 @@ public class AirSupport implements Tower {
         if (placing) {
             // determine whether plane is travelling horizontal or vertical and draw line
             if (2 * angle / Math.PI % 2 == 0) {
+                //TODO: Add to renderQueue
                 Drawing.drawLine(new Point(input.getMouseX(), 0), new Point(input.getMouseX(), Window.getHeight()),
-                        5, new Colour(200, 0, 0, 0.4));
+                        LINE_PATH_THICKNESS, new Colour(200, 0, 0, 0.4));
             } else {
                 Drawing.drawLine(new Point(0, input.getMouseY()), new Point(Window.getWidth(), input.getMouseY()),
-                        5, new Colour(200, 0, 0, 0.4));
+                        LINE_PATH_THICKNESS, new Colour(200, 0, 0, 0.4));
             }
+            // TODO: add to renderQueue
             TOWER_IMAGE.draw(input.getMouseX(), input.getMouseY(), rotate);
         } else {
 
             // increase y or x values based on direction of plane
             if (2 * angle / Math.PI % 2 == 0) {
-                y += SPEED * -Math.cos(angle) * timeScale;
+                double y = pos.y + SPEED * -Math.cos(angle) * timeScale;
+                pos = new Point(pos.x, y);
             } else {
-                x += SPEED * Math.sin(angle) * timeScale;
+                double x = pos.x + SPEED * Math.sin(angle) * timeScale;
+                pos = new Point(x, pos.y);
             }
+            RenderQueue.addToQueue(TOWER_Z, new RenderImage(pos.x, pos.y, TOWER_IMG, rotate));
 
-            TOWER_IMAGE.draw(x, y, rotate);
             time.updateTime(timeScale);
         }
     }
@@ -78,23 +94,27 @@ public class AirSupport implements Tower {
         // stop placing and set coordinated outside window at start of plane's path
         placing = false;
         if (2 * angle / Math.PI % 2 == 0) {
-            this.x = x;
-            this.y = Window.getHeight() * ((angle / Math.PI + 1) % 2);
+            pos = new Point(x,  Window.getHeight() * ((angle / Math.PI + 1) % 2));
         } else {
-            this.x = Window.getWidth() * (((angle + Math.PI / 2) / Math.PI + 1) % 2);
-            this.y = y;
+            pos = new Point(Window.getWidth() * (((angle + Math.PI / 2) / Math.PI + 1) % 2), y);
         }
 
         //start time for reloading
+        // TODO: fix this
         time = new Time();
     }
 
+    public boolean isOffScreen() {
+        return getPosition().x < 0 || pos.x > Window.getWidth() || pos.y < 0 || pos.y > Window.getHeight();
+    }
 
     /**
      * Drop explosive projectile to ground
      * @param target not applicable here (inherited from interface)
      * @return Explosive projectile dropped
      */
+
+
     @Override
     public Projectile fire(Enemy target) {
         // generate new random fire rate
@@ -106,22 +126,14 @@ public class AirSupport implements Tower {
 
         // create new explosive projectile
         // TODO: use time instead of modifier
-        return new ExplosiveProjectile(PROJECTILE_IMAGE, new Vector2(x, y), angle,
-                PROJECTILE_SPEED, EXPLOSION_RADIUS, MODIFIER);
+        return new ExplosiveProjectile(PROJECTILE_IMAGE, pos, angle,
+                PROJECTILE_SPEED, EXPLOSION_RADIUS, MODIFIER, PROJECTILE_DAMAGE);
     }
 
-    /**
-     * Determines if plane is offscreen by factor of 2
-     * @return boolean if plane is off screen
-     */
-    public boolean isOffScreen() {
-        return x < -Window.getWidth() || x > Window.getWidth() * 2 ||
-                y < -Window.getHeight() || y > Window.getHeight() * 2;
-    }
-
+    // TODO: fix these, not all are required
 
     public Point getPosition() {
-        return new Point(x, y);
+        return pos;
     }
 
     public boolean isReloaded() {
@@ -134,20 +146,25 @@ public class AirSupport implements Tower {
     }
 
     @Override
-    public double getCost() {
-        return cost;
-    }
-
-    @Override
     public double getRange() {
         return RANGE;
     }
 
     @Override
-    public void updateRotation(double angle) {
+    public void updateRotation(double angle) { }
+
+
+    public boolean canBePlaced(List<Point> blockedPoints, List<Line> blockedLines) {
+        return true;
     }
 
-    public boolean isBlocked(List<Point> blockedPoints, List<Line> blockedLines) {
-        return false;
+    @Override
+    public boolean isBlocked() { return false; }
+
+    @Override
+    public Point getTowerTopPosition() {
+        return getPosition();
     }
+
+
 }

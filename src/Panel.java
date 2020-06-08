@@ -1,19 +1,18 @@
-import bagel.DrawOptions;
 import bagel.Font;
 import bagel.Image;
 import bagel.util.Colour;
+import bagel.util.Point;
 
 import java.util.*;
 
 public class Panel {
-
-    private static final String DEFAULT_COLOUR = "#FFFFFF";
-    private final double xPos;
-    private final double yPos;
+    private static final String DEFAULT_FONT = "res/fonts/DejaVuSans-Bold.ttf";
+    private static final int DEFAULT_SIZE = 24;
+    private final Point pos;
     private final Image backgroundImg;
     private final Map<String, Text> text = new HashMap<>();
     private final List<Clickable> clickable = new ArrayList<>();
-    private static final String FONT_FILE = "res/fonts/DejaVuSans-Bold.ttf";
+
     private final Map<String, Font> fonts = new HashMap<>();
     private final BoundingBox bb;
     // TODO: improve panel using OOP
@@ -25,10 +24,10 @@ public class Panel {
      * @param filePath background image of panel
      */
     protected Panel(double x, double y, String filePath) {
-        this.xPos = x;
-        this.yPos = y;
+        this.pos = new Point(x, y);
         this.backgroundImg = new Image(filePath);
         bb = new BoundingBox(x, y, backgroundImg.getWidth(), backgroundImg.getHeight());
+
 
     }
 
@@ -36,14 +35,12 @@ public class Panel {
      * Updates panel
      */
     protected void update() {
+        RenderQueue.addToQueue(10, this);
+    }
 
-        // draw background image
-        backgroundImg.drawFromTopLeft(xPos, yPos);
-
-        // draw each text object in text map
+    public void draw() {
+        backgroundImg.drawFromTopLeft(pos.x, pos.y);
         text.forEach((key, t) -> t.draw());
-
-        // draw clickable objects and any text
         clickable.forEach(Clickable::draw);
     }
 
@@ -62,7 +59,15 @@ public class Panel {
      * @param y centre y-coordinate of text
      */
     protected void addText(String type, double x, double y, String textContent, Font font) {
-        text.put(type, new Text(font, textContent, x, y));
+        text.put(type, new Text(font, textContent, x + pos.x, y + pos.y));
+    }
+
+    protected void addText(String type, double x, double y, String textContent, int size) {
+        text.put(type, new Text(new Font(DEFAULT_FONT, size), textContent, pos.x + x, pos.y + y));
+    }
+
+    protected void addText(String type, double x, double y, String textContent) {
+        text.put(type, new Text(new Font(DEFAULT_FONT, DEFAULT_SIZE), textContent, pos.x + x, pos.y + y));
     }
 
     /**
@@ -73,6 +78,8 @@ public class Panel {
     public void updateText(String type, String newText) {
         text.get(type).updateText(newText);
     }
+
+    public void updateTextColour(String type, Colour colour) {text.get(type).updateColour(colour);}
 
     public BoundingBox getBoundingBox() {
         return bb;

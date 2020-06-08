@@ -1,5 +1,6 @@
 public final class Time {
 
+    //TODO: remove this class
     private long currentTime;
     private long totalGameTime;
 

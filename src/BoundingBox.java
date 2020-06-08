@@ -3,11 +3,10 @@ import bagel.util.Point;
 
 public class BoundingBox {
 
-    private double x;
-    private double y;
+    private final double x;
+    private final double y;
     private final double width;
     private final double height;
-    private final Clickable clickable;
 
     /**
      * Constructor for BoundingBox
@@ -21,17 +20,6 @@ public class BoundingBox {
         this.y = y;
         this.width = width;
         this.height = height;
-        clickable = null;
-    }
-
-    /**
-     * Updates x and y coordinate of bounding box
-     * @param x new x-coordinate
-     * @param y new y-coordinate
-     */
-    public void updatePosition(double x, double y) {
-        this.x = x;
-        this.y = y;
     }
 
     /**

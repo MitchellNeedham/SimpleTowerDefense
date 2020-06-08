@@ -30,17 +30,18 @@ public class TowerButton implements Clickable {
      */
     public TowerButton(String towerType, double x, double y, double price) {
         this.towerType = towerType;
-        btnImage = new Image("res/images/" + towerType + ".png");
+        btnImage = new Image("res/images/" + towerType + "/main.png");
         this.x = x;
         this.y = y;
+        // get bounding box
         bb = new BoundingBox(x - btnImage.getHeight() / 2, y - btnImage.getHeight() / 2,
                 btnImage.getWidth(), btnImage.getHeight());
         this.price = price;
 
         Font font = new Font("res/fonts/DejaVuSans-Bold.ttf", FONT_SIZE);
-        double textPosX = x - font.getWidth("$" + (int)price) / 2;
-        double textPosY = y + Y_OFFSET;
-        cost = new Text(font, "$" +(int)price, textPosX, textPosY);
+        cost = new Text(font, "$" +(int)price, x, y + Y_OFFSET);
+
+        RenderQueue.addToQueue(0, this);
     }
 
     public void draw() {
@@ -96,5 +97,9 @@ public class TowerButton implements Clickable {
     public void increasePrice() {
         price += PRICE_INCREMENT;
         cost.updateText("$" + (int)price);
+    }
+
+    public double getPrice() {
+        return price;
     }
 }

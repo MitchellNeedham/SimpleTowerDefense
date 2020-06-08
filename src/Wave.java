@@ -6,14 +6,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import bagel.util.Point;
 
 public class Wave {
-    private final static String FILE_PATH = "res/levels/";
-    private final static String FILE_NAME = "/wave ";
-    private final static String FILE_EXT = ".csv";
-    private final static String ENEMY_SLICER = "slicer";
-    private final static String splitByCSV= ",";
     private Time gameTime;
     private final int waveNumber;
-    private final int levelNumber;
     private boolean inProgress = false;
     private boolean spawning = false;
     private final Set<Enemy> Enemies = new HashSet<>();
@@ -22,18 +16,11 @@ public class Wave {
 
     /**
      * wave constructor
-     * @param level level number
      * @param waveNumber wave number
      */
-    public Wave(int level, int waveNumber) {
-        //constructor
+    public Wave(int waveNumber) {
         this.waveNumber = waveNumber;
-        this.levelNumber = level;
         System.out.println(this.waveNumber);
-        //this.gameTime = new Time();
-
-        //create enemies
-        //spawnEnemies();
     }
 
     /**
@@ -44,7 +31,14 @@ public class Wave {
         int enemyCount = Integer.parseInt(enemyData[2]);
         int i;
         for (i = 0; i < enemyCount; i++) {
-            Enemies.add(new Slicer(totalDelay, enemyData[3]));
+            // use switch to add enemies respective of type (also avoids crashes if there is a typo)
+            switch (enemyData[3]) {
+                case "slicer" -> Enemies.add(new Slicer(totalDelay, enemyData[3]));
+                case "superslicer" -> Enemies.add(new SuperSlicer(totalDelay, enemyData[3]));
+                case "megaslicer" -> Enemies.add(new MegaSlicer(totalDelay, enemyData[3]));
+                case "apexslicer" -> Enemies.add(new ApexSlicer(totalDelay, enemyData[3]));
+            }
+
             totalDelay += Integer.parseInt(enemyData[4]);
         }
     }
@@ -83,15 +77,12 @@ public class Wave {
             if (this.gameTime.getTotalGameTime() > enemy.getSpawnDelay()) {
                 enemy.awake();
             }
+
             //draw enemies
             if (enemy.getIndex() < points.get(0).size() && enemy.isActive() && !enemy.isDestroyed()) {
                 enemy.draw(timeScale, points.get(0).get(enemy.getIndex()).asVector());
-            } else if (enemy.getIndex() == points.get(0).size()) {
-                enemy.destroy();
             }
-
         });
-
     }
 
     /**
@@ -100,6 +91,7 @@ public class Wave {
      */
     public boolean isWaveComplete() {
         return Enemies.stream().allMatch(enemy -> Boolean.TRUE.equals(enemy.isDestroyed()));
+
     }
 
     /**

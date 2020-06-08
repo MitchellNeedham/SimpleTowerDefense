@@ -3,17 +3,17 @@ import bagel.Window;
 import bagel.util.Point;
 import bagel.util.Vector2;
 
-public class StandardProjectile implements Projectile{
+public class StandardProjectile extends Projectile{
 
+    private static final int Z_INDEX = 4;
     private static final double MIN_HIT_DIST = 20;
-    private final Enemy target;
+    private Enemy target;
     private final double speed;
-    private final Image projectileImg;
+    private final String imgFile;
     private Point pos;
     private Vector2 path;
     private boolean destroyed = false;
-    private double damage;
-    private boolean hitTarget = false;
+    private final double damage;
 
     /**
      * Constructor for standard projectile
@@ -23,7 +23,8 @@ public class StandardProjectile implements Projectile{
      * @param target enemy that projectile is locked onto
      */
     public StandardProjectile(String imgFile, Point pos, double speed, double damage, Enemy target) {
-        this.projectileImg = new Image(imgFile);
+        super(pos);
+        this.imgFile = imgFile;
         this.pos = pos;
         this.speed = speed;
         this.target = target;
@@ -42,30 +43,17 @@ public class StandardProjectile implements Projectile{
             path = pathToEnemy(pos.asVector(), target.getPosition().asVector());
         }
 
-
         // add path vector to position
         pos = pos.asVector().add(path.mul(timeScale)).asPoint();
+        updatePos(pos);
 
         // draw projectile
-
-        projectileImg.draw(pos.x, pos.y);
-
-
-
-        // if distance from projectile to target is less than minimum hit distance, destroy projectile and
-        // reduce enemy health
-        // TODO: implement reduction of enemy health
-
-
+        RenderQueue.addToQueue(Z_INDEX, new RenderImage(pos.x, pos.y, imgFile));
     }
 
-    public boolean isDestroyed() {
-        return destroyed;
-    }
 
-    public boolean isOffScreen() {
-        return pos.x < 0 || pos.x > Window.getWidth() || pos.y < 0 || pos.y > Window.getHeight();
-    }
+
+
 
     /**
      * Determines path vector to enemy
@@ -77,10 +65,14 @@ public class StandardProjectile implements Projectile{
         return enemyPos.sub(projPos).normalised().mul(speed);
     }
 
-
+    /**
+     * Determines if enemy has been hit
+     * @param pos Position of enemy target
+     * @return damage done to target if hit
+     */
     public double hasHitEnemy(Point pos) {
-        if (pos.distanceTo(this.pos) < MIN_HIT_DIST && !this.destroyed) {
-            this.destroyed = true;
+        if (pos.distanceTo(this.pos) < MIN_HIT_DIST && !isDestroyed()) {
+            super.destroy();
             return damage;
         }
         return 0;

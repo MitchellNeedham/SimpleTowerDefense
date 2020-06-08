@@ -1,21 +1,20 @@
-import bagel.DrawOptions;
-import bagel.Drawing;
-import bagel.Image;
-import bagel.Window;
+
 import bagel.util.Colour;
+import bagel.util.Point;
 import bagel.util.Vector2;
 
-public class ExplosiveProjectile implements Projectile{
+public class ExplosiveProjectile extends Projectile{
 
-    private final Image projectileImg;
-    private Vector2 pos;
+    private static final Colour EXPLOSION_COLOUR = new Colour(160, 0, 0, 0.4);
+    private static final String EXPLOSION_TYPE = "circle";
+    private static final int Z_INDEX = 4;
+    private final String imgFile;
+    private Point pos;
     private final Vector2 path;
-    private double angle;
     private double modifier;
-    private boolean destroyed = false;
     private final double expRadius;
     private double expSize = 0;
-    private double alpha = 0.5;
+    private final double damage;
 
     /**
      * Constructor for explosive projectile
@@ -26,13 +25,14 @@ public class ExplosiveProjectile implements Projectile{
      * @param expRadius Area of Effect for explosion
      * @param modifier reduction in speed over time
      */
-    public ExplosiveProjectile(Image imgFile, Vector2 pos, double angle, double speed, double expRadius, double modifier) {
-        this.projectileImg = imgFile;
+    public ExplosiveProjectile(String imgFile, Point pos, double angle, double speed, double expRadius, double modifier, double damage) {
+        super(pos);
+        this.imgFile = imgFile;
         this.pos = pos;
         this.path = new Vector2(speed * Math.sin(angle), speed * -Math.cos(angle));
-        this.angle = angle;
         this.expRadius = expRadius;
         this.modifier = modifier;
+        this.damage = damage;
     }
 
     /**
@@ -52,8 +52,9 @@ public class ExplosiveProjectile implements Projectile{
         if (this.modifier < 0.01) {
             explode(timeScale);
         } else {
-            pos = pos.add(path.mul(modifier*timeScale));
-            projectileImg.draw(pos.x, pos.y);
+            pos = pos.asVector().add(path.mul(modifier*timeScale)).asPoint();
+            updatePos(pos);
+            RenderQueue.addToQueue(Z_INDEX, new RenderImage(pos.x, pos.y, imgFile));
         }
     }
 
@@ -65,27 +66,27 @@ public class ExplosiveProjectile implements Projectile{
 
         // increase explosion radius
         expSize += expRadius / (60 / timeScale) * timeScale;
-        alpha -= 1 / expRadius * timeScale;
 
         // draw red circle
-        Drawing.drawCircle(pos.x, pos.y, expSize, new Colour(160, 0, 0, alpha));
+        RenderQueue.addToQueue(Z_INDEX, new Shape(EXPLOSION_TYPE, pos.x, pos.y, expSize, EXPLOSION_COLOUR));
 
         // when circle is larger than area of effect, destroy projectile
         if (expSize > expRadius) {
-            this.destroyed = true;
+            destroy();
         }
 
     }
 
-    public boolean isDestroyed() {
-        return destroyed;
-    }
-
-    public boolean isOffScreen() {
-        return pos.x < 0 || pos.x > Window.getWidth() || pos.y < 0 || pos.y > Window.getHeight();
-    }
-
+    /**
+     * Determines if enemy is in explosion radius
+     * @param pos Position of enemy
+     * @return boolean if in range
+     */
     public boolean enemyInRadius(Vector2 pos) {
-        return this.pos.sub(pos).length() < expSize;
+        return this.pos.asVector().sub(pos).length() < expSize;
+    }
+
+    public double getDamage() {
+        return damage;
     }
 }

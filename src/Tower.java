@@ -24,8 +24,10 @@ public interface Tower {
 
     boolean isPlacing();
 
-    double getCost();
+    boolean canBePlaced(List<Point> blockedPoints, List<Line> blockedLines);
 
-    boolean isBlocked(List<Point> blockedPoints, List<Line> blockedLines);
+    boolean isBlocked();
+
+    Point getTowerTopPosition();
 
 }
