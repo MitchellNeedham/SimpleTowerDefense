@@ -14,7 +14,7 @@ public class Bomber extends ActiveTower {
     private static final int RUNWAY_Z = 2;
     private static final int PLANE_Z = 8;
     private final static int OVERLAY_Z = 9;
-    private final static int UNDERLAY_Z = 3;
+    private final static int UNDERLAY_Z = 2;
 
 
     //-------------------------INFO DISPLAY PROPERTIES-------------------------//
