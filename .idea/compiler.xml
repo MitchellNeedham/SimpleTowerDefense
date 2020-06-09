@@ -6,10 +6,16 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
+        <module name="mneedham-project-2" />
+        <module name="mneedham-project-1" />
+        <module name="bagel" />
         <module name="ShadowDefend" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="bagel" target="8" />
+      <module name="mneedham-project-1" target="8" />
+      <module name="mneedham-project-2" target="8" />
       <module name="ShadowDefend" target="8" />
     </bytecodeTargetLevel>
   </component>

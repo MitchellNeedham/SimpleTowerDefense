@@ -1,28 +1,19 @@
 import bagel.util.Point;
 
-import java.util.*;
-
 public class Slicer extends Enemy {
 
-    //TODO: Maybe make package for slicers and add more?
-
-    // z index for render
-    private static final int Z_INDEX = 7;
-
-    private static final String TYPE = "slicer";
-    private static final double SPEED = 1.0;
-    private static final double HEALTH = 600.0;
+    private static final String IMAGE_PATH = "res/images/slicer.png";
     private static final double REWARD = 2.0;
+
+    public static final double SPEED = 2.0;
+    public static final double HEALTH = 1.0;
 
     /**
      * Constructor for Slicer
      * @param spawnDelay time in milliseconds after start of waves before slicer spawns
-     * @param type String containing name of slicer enemy
      */
-    public Slicer(int spawnDelay, String type) {
-        super(TYPE, Z_INDEX, SPEED, spawnDelay, "res/images/slicer/" + type + ".png",
-                HEALTH, REWARD);
-
+    public Slicer(int spawnDelay) {
+        super(SPEED, spawnDelay, IMAGE_PATH, HEALTH, REWARD, getTotalPenalty());
     }
 
     /**
@@ -31,8 +22,10 @@ public class Slicer extends Enemy {
      * @param pointsIndex point new slicer should move towards
      */
     public Slicer(Point position, int pointsIndex) {
-        super(TYPE, Z_INDEX, SPEED, HEALTH, REWARD,
-                "res/images/slicer/" + TYPE + ".png", position, pointsIndex);
+        super(SPEED, HEALTH, REWARD, IMAGE_PATH, position, pointsIndex, getTotalPenalty());
     }
 
+    public static double getTotalPenalty() {
+        return HEALTH;
+    }
 }

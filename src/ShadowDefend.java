@@ -31,8 +31,13 @@ public class ShadowDefend extends AbstractGame {
     //-------------------------BUY PANEL ITEMS-------------------------//
 
     private static final int BUY_PANEL_FONT_SIZE = 48;
-    public final static String MONEY = "$ ";
+    public final static String MONEY = "$";
     private final static Point MONEY_POS = new Point(800, 60);
+
+    private static final String[] BUY_PANEL_BINDINGS_INFO = {"Key bindings:", "S - Start Wave", "L - Increase Timescale", "K - Decrease Timescale"};
+    private static final int BINDINGS_FONT_SIZE = 16;
+    private static final double BINDINGS_X_POSITION = 600D;
+    private static final double BINDINGS_HEIGHT = 100D;
 
 
     //-------------------------STATUS PANEL ITEMS-------------------------//
@@ -54,9 +59,10 @@ public class ShadowDefend extends AbstractGame {
     private final static int OFF_SCREEN_Y = -100;
     private final static String IMG_PATH = "res/images/";
     private final static String LEVEL_PATH = "res/levels/";
+    private final static String LEVEL_MAP_EXT = ".tmx";
 
-    private static final String BUY_PANEL_IMAGE = "res/images/panels/buypanel.png";
-    private static final String STATUS_PANEL_IMAGE = "res/images/panels/statuspanel.png";
+    private static final String BUY_PANEL_IMAGE = "res/images/buypanel.png";
+    private static final String STATUS_PANEL_IMAGE = "res/images/statuspanel.png";
     private static Panel buyPanel;
     private static Panel statusPanel;
 
@@ -93,12 +99,10 @@ public class ShadowDefend extends AbstractGame {
 
         // determine number of levels
         this.maxLevels = getMaxLevels();
+        System.out.println(maxLevels);
 
         // create map
         this.map = level.createMap();
-
-        // initialise menu
-        Menu.init(maxLevels);
 
         // get all image files
         getAllImageFiles(IMG_PATH);
@@ -112,38 +116,16 @@ public class ShadowDefend extends AbstractGame {
      */
     @Override
     protected void update(Input input) {
-
-        // update menu and if menu is not active (in gamestate), update game
-        if (Menu.update(input) == 0) {
-            // if level selected is not current level, load it instead
-            if (Menu.getLevel() != level.getLevel()) {
-                level = new Level(Menu.getLevel());
-                map = level.createMap();
-            }
-            // update game
-            gameUpdate(input);
-        } else {
-            // while in menu, set timescale to 0
-            timeScale = 0;
-        }
-    }
-
-    /**
-     * Updates game
-     * @param input user defined input
-     */
-    public void gameUpdate(Input input) {
         //draw map
         map.draw(0, 0, 0, 0, Window.getWidth(), Window.getHeight());
 
         //render all image files off screen to prevent glitch when new image is created
         imageFiles.forEach(image -> image.draw(OFF_SCREEN_X, OFF_SCREEN_Y));
 
-        RenderQueue.renderObjects();
 
 
         //start wave when 'S' key is pressed, but only if a wave is not in progress
-        if (input.wasPressed(Keys.S) && !level.isWaveInProgress()) {
+        if (!level.isWaveInProgress() && input.wasPressed(Keys.S)) {
             level.start();
         }
 
@@ -176,8 +158,7 @@ public class ShadowDefend extends AbstractGame {
         //if no more levels, close window and exit game
         if (level.isLevelComplete()) {
             if (currentLevel == maxLevels) {
-                Window.close();
-                System.exit(0);
+                exitGame();
             }
 
             //next level
@@ -192,7 +173,6 @@ public class ShadowDefend extends AbstractGame {
         buyPanel.update();
         statusPanel.update();
     }
-
 
 
     /**
@@ -227,7 +207,7 @@ public class ShadowDefend extends AbstractGame {
     private int getMaxLevels() {
         // count number of directories in levels
         try (Stream<Path> paths = Files.walk(Paths.get(LEVEL_PATH))) {
-            return (int) paths.skip(1).filter(Files::isDirectory).count();
+            return (int) paths.skip(1).filter(file -> file.toString().endsWith(LEVEL_MAP_EXT)).count();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -236,6 +216,12 @@ public class ShadowDefend extends AbstractGame {
 
     public static void initPanels() {
         buyPanel.addText(MONEY, MONEY_POS.x, MONEY_POS.y, "", new Font(FONT_FILE, BUY_PANEL_FONT_SIZE));
+
+        for (int i = 0; i < BUY_PANEL_BINDINGS_INFO.length; i++) {
+            double yPos = BINDINGS_HEIGHT/BUY_PANEL_BINDINGS_INFO.length * i + (double)BINDINGS_FONT_SIZE;
+            buyPanel.addText(String.valueOf(i), BINDINGS_X_POSITION, yPos, BUY_PANEL_BINDINGS_INFO[i], new Font(FONT_FILE, BINDINGS_FONT_SIZE));
+        }
+
         statusPanel.addText(LIVES, LIVES_POS.x, LIVES_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
         statusPanel.addText(WAVE, WAVE_POS.x, WAVE_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
         statusPanel.addText(STATUS, STATUS_POS.x, STATUS_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
@@ -243,15 +229,24 @@ public class ShadowDefend extends AbstractGame {
     }
 
     public static void updateStatus(int status) {
-        STATUS_SET.add(status);
-        System.out.println(STATUS_TYPE[STATUS_SET.last()]);
-        statusPanel.updateText(STATUS, STATUS + STATUS_TYPE[STATUS_SET.last()]);
+        if (!STATUS_SET.contains(status)) {
+            STATUS_SET.add(status);
+            statusPanel.updateText(STATUS, STATUS + STATUS_TYPE[STATUS_SET.last()]);
+        }
+
     }
 
     public static void removeStatus(int status) {
-        STATUS_SET.remove(status);
+        if (STATUS_SET.contains(status)) {
+            STATUS_SET.remove(status);
+            statusPanel.updateText(STATUS, STATUS + STATUS_TYPE[STATUS_SET.last()]);
+        }
     }
 
+    public static void exitGame() {
+        Window.close();
+        System.exit(0);
+    }
 
 
     public static Panel getBuyPanel() {
@@ -262,7 +257,7 @@ public class ShadowDefend extends AbstractGame {
         return statusPanel;
     }
 
-    public static double getTimeScale() {
+    public static double getTimescale() {
         return timeScale;
     }
 }
