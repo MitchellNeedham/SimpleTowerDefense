@@ -154,7 +154,6 @@ public class Level {
 
         // if wave has completed, start a new one and increase player's money
         if (currentWave < waves.size()) {
-            System.out.println(currentWave);
             if (waves.get(currentWave).isWaveComplete()) {
                 currentWave++;
                 money += BASE_REWARD + (currentWave - 1) * INCREMENTAL_REWARD;

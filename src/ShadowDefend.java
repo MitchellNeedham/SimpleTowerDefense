@@ -89,7 +89,6 @@ public class ShadowDefend extends AbstractGame {
      */
     public ShadowDefend() {
         // create buy and status panel
-        // TODO: create endgame panel
         buyPanel = new Panel(0,0, BUY_PANEL_IMAGE);
         statusPanel = new Panel(0, 743, STATUS_PANEL_IMAGE);
         initPanels();
@@ -101,7 +100,6 @@ public class ShadowDefend extends AbstractGame {
 
         // determine number of levels
         this.maxLevels = getMaxLevels();
-        System.out.println(maxLevels);
 
         // create map
         ShadowDefend.map = level.createMap();
