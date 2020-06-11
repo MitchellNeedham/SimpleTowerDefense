@@ -7,16 +7,15 @@ import bagel.util.Vector2;
 
 public class ExplosiveProjectile extends Projectile{
 
-
-    //-------------------------RENDER PRIORITIES-------------------------//
+    //-------------------------PROJECTILE DATA-------------------------//
 
     private static final Colour EXPLOSION_COLOUR = new Colour(0.9D, 0, 0, 0.4D);
+    private static final int FRAMES_TO_COMPLETE_EXPLOSION = 60;
 
     private final Image projectileImage;
-    private final Time time;
-    private Point pos;
-    private final Vector2 path;
-    private double delay;
+    private final Timer timer;
+    private final Point pos;
+    private final double delay;
     private final double expRadius;
     private double expSize = 0;
     private final double damage;
@@ -25,35 +24,28 @@ public class ExplosiveProjectile extends Projectile{
      * Constructor for explosive projectile
      * @param image projectile image file loaded as bagel.Image
      * @param pos position at origin of projectile path
-     * @param angle orientation of projectile image
-     * @param speed movement speed of projectile in pixels per frame
      * @param expRadius Area of Effect for explosion
-     * @param delay time delay before explosion
+     * @param delay timer delay before explosion
      */
-    public ExplosiveProjectile(Image image, Point pos, double angle, double speed, double expRadius, double delay, double damage) {
+    public ExplosiveProjectile(Image image, Point pos, double expRadius, double delay, double damage) {
         super(pos);
         this.projectileImage = image;
         this.pos = pos;
-        this.path = new Vector2(speed * Math.sin(angle), speed * -Math.cos(angle));
         this.expRadius = expRadius;
         this.delay = delay;
         this.damage = damage;
-        this.time = new Time();
+        this.timer = new Timer();
     }
 
     /**
      * Update position of projectile and explode when it hits ground
-     * @param timeScale game speed multiplier
      */
-    public void update(float timeScale) {
-        time.updateTime(timeScale);
+    public void update() {
+        timer.updateTime();
 
-        // explode projectile if modifier reaches limit
-        // otherwise, draw projectile
-        // TODO: scale projectile image down to simulate falling
-        // TODO: use time instead of modifier
-        if (time.getTotalGameTime() > delay) {
-            explode(timeScale);
+        // explode projectile if time has surpassed specified delay, otherwise draw projectile
+        if (timer.getTotalGameTime() > delay) {
+            explode();
         } else {
             projectileImage.draw(pos.x, pos.y);
         }
@@ -61,12 +53,11 @@ public class ExplosiveProjectile extends Projectile{
 
     /**
      * Detonates explosive and draws growing red circle
-     * @param timeScale game speed multiplier
      */
-    private void explode(float timeScale) {
-
+    private void explode() {
+        float timeScale = ShadowDefend.getTimescale();
         // increase explosion radius
-        expSize += expRadius / (60 / timeScale) * timeScale;
+        expSize += expRadius / (FRAMES_TO_COMPLETE_EXPLOSION / timeScale) * timeScale;
 
         // draw red circle
         Drawing.drawCircle(pos.x, pos.y, expSize, EXPLOSION_COLOUR);

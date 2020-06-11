@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Set;
 
 public class Wave {
-    private Time gameTime;
-    private final Set<Enemy> Enemies = new HashSet<>();
 
+    private final Set<Enemy> Enemies = new HashSet<>(); // enemies for each wave
+    private Timer timer; // timer
     private int totalDelay = 0;
 
     /**
@@ -16,10 +16,11 @@ public class Wave {
      * @param enemyData String array containing information about enemies in wave
      */
     public void addEnemies(String[] enemyData) {
-        int enemyCount = Integer.parseInt(enemyData[2]);
-        int i;
-        for (i = 0; i < enemyCount; i++) {
-            // use switch to add enemies respective of type (also avoids crashes if there is a typo)
+        int enemyCount = Integer.parseInt(enemyData[2]); // get total enemies in spawn event
+
+        for (int i = 0; i < enemyCount; i++) {
+
+            // use switch to add enemies respective of type
             switch (enemyData[3]) {
                 case "slicer":
                     Enemies.add(new Slicer(totalDelay));
@@ -35,43 +36,48 @@ public class Wave {
                     break;
             }
 
+            // all delay of each event to total delay
             totalDelay += Integer.parseInt(enemyData[4]);
         }
     }
 
-    public void addEnemy(Enemy enemy) {
-        Enemies.add(enemy);
-    }
+    /**
+     * Adds enemy to enemy list (only occurs if a parent enemy was destroyed)
+     * @param enemy Enemy object containing new enemy
+     */
+    public void addEnemy(Enemy enemy) { Enemies.add(enemy); }
 
-    public void addDelay(int delay) {
-        totalDelay += delay;
-    }
+    /**
+     * Adds delay to total delay in wave
+     * @param delay int containing delay in milliseconds
+     */
+    public void addDelay(int delay) { totalDelay += delay; }
 
     /**
      * Starts spawning enemies in wave
      */
     public void startWave() {
-        gameTime = new Time();
+        timer = new Timer();
     }
-
 
     /**
      * Run through list of enemies and awakens them after their spawn delay time has elapsed
      * gets next point that enemy is moving towards and draws enemy
-     * @param timeScale game speed multiplier
      * @param points a list of a list of points forming a polyline that enemies follow as a path
      */
-    public void drawEnemies(float timeScale, List<List<Point>> points) {
+    public void drawEnemies(List<List<Point>> points) {
 
         //iterate through enemies and awaken them if spawnDelay time has elapsed
         Enemies.forEach(enemy -> {
-            if (this.gameTime.getTotalGameTime() > enemy.getSpawnDelay()) {
+
+            // awaken enemy if spawn delay has elapsed
+            if (this.timer.getTotalGameTime() > enemy.getSpawnDelay()) {
                 enemy.awake();
             }
 
             //draw enemies
             if (enemy.getIndex() < points.get(0).size() && enemy.isActive() && !enemy.isDestroyed()) {
-                enemy.draw(timeScale, points.get(0).get(enemy.getIndex()).asVector());
+                enemy.draw(points.get(0).get(enemy.getIndex()));
             }
         });
     }
@@ -82,15 +88,6 @@ public class Wave {
      */
     public boolean isWaveComplete() {
         return Enemies.stream().allMatch(enemy -> Boolean.TRUE.equals(enemy.isDestroyed()));
-
-    }
-
-    /**
-     * return Time object for this wave
-     * @return Time object gameTime
-     */
-    public Time getTime(){
-        return gameTime;
     }
 
     /**
@@ -104,7 +101,14 @@ public class Wave {
                 enemiesOnScreen.add(enemy);
             }
         }
-
         return enemiesOnScreen;
+    }
+
+    /**
+     * return Timer object for this wave
+     * @return Timer object timer
+     */
+    public Timer getTimer(){
+        return timer;
     }
 }

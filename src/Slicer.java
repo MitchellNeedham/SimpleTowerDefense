@@ -2,8 +2,11 @@ import bagel.util.Point;
 
 public class Slicer extends Enemy {
 
+    //-------------------------SLICER PROPERTIES-------------------------//
+
     private static final String IMAGE_PATH = "res/images/slicer.png";
     private static final double REWARD = 2.0;
+    private static final double PENALTY = 1.0;
 
     public static final double SPEED = 2.0;
     public static final double HEALTH = 1.0;
@@ -25,7 +28,10 @@ public class Slicer extends Enemy {
         super(SPEED, HEALTH, REWARD, IMAGE_PATH, position, pointsIndex, getTotalPenalty());
     }
 
+    /**
+     * @return penalty for this slicer
+     */
     public static double getTotalPenalty() {
-        return HEALTH;
+        return PENALTY;
     }
 }

@@ -1,8 +1,9 @@
 public class Tank extends ActiveTower {
 
+    //-------------------------TANK PROPERTIES-------------------------//
+
     public static final String TYPE = "tank";
     public static final int COST = 250;
-
     private static final double PROJECTILE_SPEED = 10;
     private static final double PROJECTILE_DAMAGE = 1;
     private static final double RANGE = 100;

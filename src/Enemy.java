@@ -39,7 +39,6 @@ public class Enemy {
                  double penalty) {
         this.movementSpeed = movementSpeed;
         this.spawnDelay = spawnDelay;
-        //create image for enemy
         this.enemyImage = new Image(filePath);
         this.hitPoints = hitPoints;
         this.reward = reward;
@@ -77,21 +76,20 @@ public class Enemy {
      * creates a movement vector of length 1 that aims at the point enemy is aiming towards
      * multiplies vector movement speed and any time scaling present and adds new vector to current position
      * draws enemy at new position
-     * @param timeScale game speed multiplier
-     * @param nextPoint position on map that enemy is moving towards
+     * @param point position on map that enemy is moving towards
      */
-    public void draw(float timeScale, Vector2 nextPoint) {
+    public void draw(Point point) {
+
+        Vector2 nextPoint = point.asVector();
 
         //initialise position as nextPoint which will always be the first point in polyline
         if (position == null) position = nextPoint;
 
-
         //if enemy is within (movementSpeed * timeScale) pixels (i.e the closest position enroute to nextPoint)
         //change the point enemy is heading towards and draw enemy at nextPoint
-        if (position.sub(nextPoint).length() <= movementSpeed * timeScale) {
+        if (position.sub(nextPoint).length() <= movementSpeed * ShadowDefend.getTimescale()) {
             pointsIndex++;
             enemyImage.draw(nextPoint.x, nextPoint.y, new DrawOptions().setRotation(angle));
-
             return;
         }
 
@@ -102,18 +100,40 @@ public class Enemy {
         moveVector = moveVector.normalised();
 
         //multiply by timeScale and movement speed to get number of pixels it should move per frame
-        moveVector = moveVector.mul(movementSpeed * timeScale);
+        moveVector = moveVector.mul(movementSpeed * ShadowDefend.getTimescale());
 
         //add moveVector to position
         position = position.add(moveVector);
 
         // only update angle if game is not paused
-        if (timeScale > 0) angle = Math.atan2(moveVector.y, moveVector.x);
+        if (ShadowDefend.getTimescale() > 0) angle = Math.atan2(moveVector.y, moveVector.x);
 
         DrawOptions rotate = new DrawOptions().setRotation(angle);
 
         //draw enemy
         enemyImage.draw(position.x, position.y, rotate);
+    }
+
+    /**
+     * subtracts damage from hit points and returns boolean if destroyed
+     * @param dmgPoints damage dealt by projectile
+     * @return boolean if enemy is destroyed
+     */
+    public boolean destroyedByDamage(double dmgPoints) {
+        hitPoints -= dmgPoints;
+        if (hitPoints <= 0) {
+            this.destroy();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * spawns children (base case is empty, overridden by slicers)
+     * @return empty list
+     */
+    public List<Enemy> spawnChildren() {
+        return Collections.emptyList();
     }
 
     public int getIndex() {
@@ -144,31 +164,8 @@ public class Enemy {
         return moveVector;
     }
 
-    /**
-     * subtracts damage from hit points and returns boolean if destroyed
-     * @param dmgPoints damage dealt by projectile
-     * @return boolean if enemy is destroyed
-     */
-    public boolean destroyedByDamage(double dmgPoints) {
-        hitPoints -= dmgPoints;
-        if (hitPoints <= 0) {
-            this.destroy();
-            return true;
-        }
-        return false;
-    }
-
     public double getReward() { return reward; }
 
     public double getPenalty() { return penalty; }
-
-    /**
-     * spawns children (base case is empty)
-     * @return empty list
-     */
-    public List<Enemy> spawnChildren() {
-        return Collections.emptyList();
-    }
-
 
 }

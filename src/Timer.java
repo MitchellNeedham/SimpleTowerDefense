@@ -1,31 +1,34 @@
-public final class Time {
+public final class Timer {
 
-    //TODO: remove this class
     private long currentTime;
     private long totalGameTime;
 
     //constructor for time
-    public Time() {
+    public Timer() {
         this.currentTime = System.currentTimeMillis();
     }
 
     /**
      * update time, gets called every frame
      */
-    public void updateTime(float timeScale) {
+    public void updateTime() {
         long previousTime = currentTime;
         currentTime = System.currentTimeMillis();
-        totalGameTime += (currentTime - previousTime) * timeScale;
+        totalGameTime += (currentTime - previousTime) * ShadowDefend.getTimescale();
     }
 
     /**
-     * @return total in game time since Time object created
+     * @return total in game time since Timer object created
      */
     public long getTotalGameTime() {
         return totalGameTime;
     }
 
+    /**
+     * Resets timer
+     */
     public void reset() {
+        this.totalGameTime = 0;
         this.currentTime = System.currentTimeMillis();
     }
 }

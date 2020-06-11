@@ -5,6 +5,8 @@ import java.util.List;
 
 public class SuperSlicer extends Enemy {
 
+    //-------------------------SLICER PROPERTIES-------------------------//
+
     private static final String IMAGE_PATH = "res/images/superslicer.png";
     private static final double CHILDREN_SPAWN_DIST = 10D;
     private static final double REWARD = 4.0D;
@@ -49,6 +51,10 @@ public class SuperSlicer extends Enemy {
         return slicers;
     }
 
+    /**
+     * gets total penalty for this slicer based on its children
+     * @return total penalty for this slicer
+     */
     public static double getTotalPenalty() {
         double penalty = 0;
         for (int i = 0; i < CHILDREN; i++) {

@@ -3,6 +3,16 @@ import bagel.util.Point;
 
 public class BoundingBox {
 
+
+
+    /**
+     * This class creates a bounding box based on set specifications, rather than image dimensions
+     *
+     * It's sole purpose is to determine if a mouse is over the object, though it could adapted for more uses
+     */
+
+    //-------------------------BOUNDING BOX PROPERTIES-------------------------//
+
     private final double x;
     private final double y;
     private final double width;
@@ -29,10 +39,6 @@ public class BoundingBox {
      */
     public boolean isMouseOver(Input input) {
         Point position = input.getMousePosition();
-        if (position.x > x && position.x < x + width) {
-            return position.y > y && position.y < y + height;
-        }
-        return false;
+        return (position.x > x && position.x < x + width && position.y > y && position.y < y + height);
     }
-
 }

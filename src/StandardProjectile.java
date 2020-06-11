@@ -4,7 +4,9 @@ import bagel.util.Vector2;
 
 public class StandardProjectile extends Projectile{
 
-    private static final double MIN_HIT_DIST = 20;
+    //-------------------------PROJECTILE PROPERTIES------------------------//
+
+    private static final double MIN_HIT_DIST = 20.0D; // distance from enemy before enemy takes damage
     private final Enemy target;
     private final double speed;
     private final Image projectileImage;
@@ -17,6 +19,7 @@ public class StandardProjectile extends Projectile{
      * @param image projectile image file loaded as bagel.Image
      * @param pos position at origin of projectile path
      * @param speed movement speed of projectile in pixels per frame
+     * @param damage damage of projectile
      * @param target enemy that projectile is locked onto
      */
     public StandardProjectile(Image image, Point pos, double speed, double damage, Enemy target) {
@@ -27,30 +30,24 @@ public class StandardProjectile extends Projectile{
         this.target = target;
         this.path = pathToEnemy(pos.asVector(), target.getPosition().asVector());
         this.damage = damage;
-
     }
 
     /**
      * Updates position of projectile and determines if collision occurred
-     * @param timeScale game speed multiplier
      */
-    public void update(float timeScale) {
+    public void update() {
         // get path vector from current position aiming at enemy
         if (!target.isDestroyed()) {
             path = pathToEnemy(pos.asVector(), target.getPosition().asVector());
         }
 
         // add path vector to position
-        pos = pos.asVector().add(path.mul(timeScale)).asPoint();
+        pos = pos.asVector().add(path.mul(ShadowDefend.getTimescale())).asPoint();
         updatePos(pos);
 
         // draw projectile
         projectileImage.draw(pos.x, pos.y);
     }
-
-
-
-
 
     /**
      * Determines path vector to enemy
@@ -67,7 +64,7 @@ public class StandardProjectile extends Projectile{
      * @param pos Position of enemy target
      * @return damage done to target if hit
      */
-    public double hasHitEnemy(Point pos) {
+    public double damageInflicted(Point pos) {
         if (pos.distanceTo(this.pos) < MIN_HIT_DIST && !isDestroyed()) {
             super.destroy();
             return damage;

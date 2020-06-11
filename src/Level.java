@@ -1,6 +1,5 @@
 import bagel.Input;
 import bagel.MouseButtons;
-import bagel.Window;
 import bagel.map.TiledMap;
 import bagel.util.Colour;
 import bagel.util.Point;
@@ -8,12 +7,7 @@ import bagel.util.Vector2;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Stream;
 
 public class Level {
 
@@ -27,38 +21,55 @@ public class Level {
 
     //-------------------------INITIAL LEVEL PROPERTIES-------------------------//
 
-    private final static int INITIAL_LIVES = 25;
+    private final static int INITIAL_SP_LIVES = 25;
     private final static int INITIAL_MONEY = 500;
     private final static int REWARD_MONEY = 150;
 
-    private final static String MAP_PATH = "res/levels/";
-    private final static String MAP_EXT = ".tmx";
 
-    private final int level;
-    private int currentWave = 0;
-    private final Stack<Wave> waves = new Stack<>();
+    //-------------------------TOWER BUTTON DATA-------------------------//
 
-    private boolean waveInProgress;
-
-    private int lives;
-    private int money;
     private static final String[] TOWER_TYPES = {Tank.TYPE, SuperTank.TYPE, AirSupport.TYPE};
     private static final int[] TOWER_PRICES = {Tank.COST, SuperTank.COST, AirSupport.COST};
-
     private static final Point TOWER_BUTTON_POSITION = new Point(64, 40);
     private static final double TOWER_BUTTON_OFFSET_X = 120;
+
+
+    //-------------------------MAP FILE-------------------------//
+
+    private final static String MAP_PATH = "res/levels/";
+    private final static String MAP_EXT = ".tmx";
+    private final static String BLOCKED_PROPERTY = "blocked";
+
+
+    //-------------------------WAVE FILE-------------------------//
+
+    private final static String WAVES_FILE = "res/levels/waves.txt";
+    private final static String SPAWN_EVENT = "spawn";
+    private final static String DELAY_EVENT = "delay";
+
+
+    //-------------------------LEVEL STORAGE-------------------------//
+
+    private final Stack<Wave> waves = new Stack<>();
     private final List<TowerButton> towerButtons = new ArrayList<>();
-    private double planeOrientation = 0;
     private final List<Projectile> projectiles = new ArrayList<>();
-
     private final Stack<Tower> towers = new Stack<>();
-
+    // due to how I implemented the bomb (growing radius explosion) I need to store which enemies have been hit
     private final Map<Projectile, ArrayList<Enemy>> explosiveProjectileHits = new HashMap<>();
+    private final List<Point> blockedPoints = new ArrayList<>(); // positions of towers
 
-    private Tower dragActive = null;
 
-    private final List<Point> blockedPoints = new ArrayList<>();
-    private final List<Line> blockedLines = new ArrayList<>();
+    //-------------------------LEVEL DATA-------------------------//
+
+    private TiledMap map;
+    private final int level;
+    private int currentWave = 0;
+    private boolean waveInProgress = false;
+    private int lives = INITIAL_SP_LIVES;
+    private int money = INITIAL_MONEY;
+    private double planeOrientation = 0;
+    private Tower dragActive = null; // tower that is currently being dragged after purchase
+
 
     /**
      * Level constructor
@@ -66,57 +77,62 @@ public class Level {
      */
     public Level(int level) {
         this.level = level;
-        createWaves();
-        this.waveInProgress = false;
-        this.money = INITIAL_MONEY;
-        this.lives = INITIAL_LIVES;
+        createWaves(); // read waves file and initialise waves
 
-
+        // get panels
         Panel buyPanel = ShadowDefend.getBuyPanel();
         Panel statusPanel = ShadowDefend.getStatusPanel();
         ShadowDefend.updateStatus(STATE_WAITING);
 
+        // create tower buttons and add them to the buy panel
         for (int i = 0; i < TOWER_TYPES.length; i++) {
             towerButtons.add(new TowerButton(TOWER_TYPES[i], TOWER_BUTTON_POSITION.x + TOWER_BUTTON_OFFSET_X * i,
                     TOWER_BUTTON_POSITION.y, TOWER_PRICES[i]));
-            buyPanel.addClickable(towerButtons.get(i));
+            buyPanel.addButton(towerButtons.get(i));
         }
-        statusPanel.updateText(ShadowDefend.TIMESCALE, ShadowDefend.TIMESCALE + ShadowDefend.getTimescale());
-        statusPanel.updateText(ShadowDefend.LIVES, ShadowDefend.LIVES + lives);
-        statusPanel.updateText(ShadowDefend.WAVE, ShadowDefend.WAVE + currentWave);
 
+        // update text on status panel
+        statusPanel.updateText(ShadowDefend.SP_TIMESCALE, ShadowDefend.SP_TIMESCALE +
+                ShadowDefend.getTimescale());
+        statusPanel.updateText(ShadowDefend.SP_LIVES, ShadowDefend.SP_LIVES + lives);
+        statusPanel.updateText(ShadowDefend.SP_WAVE, ShadowDefend.SP_WAVE + currentWave);
     }
 
     /**
-     * Start waves
+     * Start next wave
      */
-
-    // TODO: Consider implementing many polylines and waves for each line
     protected void start() {
-        waves.get(currentWave).startWave();
-        waveInProgress = true;
-        ShadowDefend.updateStatus(STATE_IN_PROGRESS);
+        if (currentWave < waves.size()) {
+            waves.get(currentWave).startWave();
+            waveInProgress = true;
+            ShadowDefend.updateStatus(STATE_IN_PROGRESS);
+        }
     }
 
     /**
      * Read waves.txt and add enemies to waves
      */
     private void createWaves() {
-        String filepath = "res/levels/waves.txt";
-
         try {
-            File fp = new File(filepath);
+            File fp = new File(WAVES_FILE);
             Scanner myReader = new Scanner(fp);
+
+            // read file
             while (myReader.hasNextLine()) {
+                // split lines by the commas to get the wave data in a string array
                 String[] waveData = myReader.nextLine().split(",");
 
+                // creates new wave
                 if (Integer.parseInt(waveData[0]) > waves.size() && waveData.length == 5) {
                     waves.add(new Wave());
                 }
-                if (waveData[1].equals("spawn")) {
 
+                // adds enemies
+                if (waveData[1].equals(SPAWN_EVENT)) {
                     waves.lastElement().addEnemies(waveData);
-                } else if (waveData[1].equals("delay")) {
+
+                } else if (waveData[1].equals(DELAY_EVENT)) {
+                    // adds a delay event
                     waves.lastElement().addDelay(Integer.parseInt(waveData[2]));
                 }
             }
@@ -124,29 +140,26 @@ public class Level {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
     }
 
     /**
      * Update level and all components within
      * @param input user-defined input
-     * @param timeScale game speed multiplier
-     * @param points polylines defined by map
      */
-    public void update(Input input, float timeScale, List<List<Point>> points) {
+    public void update(Input input) {
 
         // update enemies
         if (waveInProgress) {
-            updateEnemies(timeScale, points);
+            updateEnemies();
         }
         // update projectiles
-        updateProjectiles(timeScale);
+        updateProjectiles();
 
         // update towers
-        updateTowers(input, timeScale, points);
+        updateTowers(input);
 
         // update panels
-        updatePanelText(timeScale);
+        updatePanelText();
 
         // create tower from buy panel
         createTower(input);
@@ -154,83 +167,105 @@ public class Level {
 
     /**
      * Updates enemy positions and states
-     * @param timeScale game speed multiplier
-     * @param points list of polylines as defined by the map
      */
-    public void updateEnemies(float timeScale, List<List<Point>> points) {
-        Wave currWave = waves.get(currentWave);
-        // get waves in progress and update enemies in them
-        currWave.getTime().updateTime(timeScale);
-        currWave.drawEnemies(timeScale, points);
+    public void updateEnemies() {
+        Wave currWave = waves.get(currentWave); // get current wave
+        currWave.getTimer().updateTime(); // update time
+        currWave.drawEnemies(map.getAllPolylines()); // draw enemies
+
+        // if wave has completed, start a new one and increase player's money
         if (waves.get(currentWave).isWaveComplete()) {
-            currentWave ++;
+            currentWave++;
             money += REWARD_MONEY * currentWave;
             waveInProgress = false;
-            ShadowDefend.removeStatus(STATE_WIN);
         }
+
+        // update enemies on screen
         for (Enemy enemy : currWave.getEnemiesOnScreen()) {
-            if (enemy.getIndex() >= points.get(0).size()) {
+
+            // if enemy has completed polyline path, destroy enemy
+            if (enemy.getIndex() >= map.getAllPolylines().get(0).size()) {
                 enemy.destroy();
                 lives -= enemy.getPenalty();
+
+                // if lives reaches 0, exit game
                 if (lives <= 0) {
                     ShadowDefend.exitGame();
                 }
             }
         }
-
     }
 
     /**
      * Update projectile positions and collisions
-     * @param timeScale game speed multiplier
      */
-    private void updateProjectiles(float timeScale) {
+    private void updateProjectiles() {
 
         // iterate through projectiles and destroy any off screen or that have collided
-        Iterator<Projectile> p = projectiles.iterator();
-        while (p.hasNext()) {
-            Projectile pr = p.next();
+        Iterator<Projectile> projectileIterator = projectiles.iterator();
 
-            // cleans up projectiles without targets
+        while (projectileIterator.hasNext()) {
+            Projectile pr = projectileIterator.next();
+
+            // cleans up projectile "blanks"
             if (pr == null) {
-                p.remove();
+                projectileIterator.remove();
                 continue;
             }
 
             // if projectile is explosive, destroy enemies within area of effect
-
             for (Enemy enemy : getEnemiesOnScreen()) {
-                if (pr.getClass() == ExplosiveProjectile.class) {
+                double damage = 0;
+
+                if (pr instanceof ExplosiveProjectile) {
+
+                    // store projectile and any enemies its explosion hits
                     if (!explosiveProjectileHits.containsKey(pr)) {
                         explosiveProjectileHits.put(pr, new ArrayList<>());
                     }
+
+                    // if enemy is in radius and hasn't already taken damage, deal damage
                     if (((ExplosiveProjectile) pr).enemyInRadius(enemy.getPosition().asVector()) &&
                             !explosiveProjectileHits.get(pr).contains(enemy)) {
+
+                        damage = ((ExplosiveProjectile) pr).getDamage();
                         enemy.destroyedByDamage(((ExplosiveProjectile) pr).getDamage());
+
+                        // add enemy to list of enemies hit
                         explosiveProjectileHits.get(pr).add(enemy);
                     }
                 }
-                if (pr.getClass() == StandardProjectile.class) {
 
-                    double dmg = ((StandardProjectile) pr).hasHitEnemy(enemy.getPosition());
-                    if (dmg == 0) {
+                else if (pr instanceof StandardProjectile) {
+                    damage = ((StandardProjectile) pr).damageInflicted(enemy.getPosition());
+                    // if the projectile didn't hit, do nothing
+                    if (damage == 0) {
                         continue;
                     }
-                    if (enemy.destroyedByDamage(dmg)){
-                        this.money += enemy.getReward();
-                        if (enemy.spawnChildren() != null) {
-                            enemy.spawnChildren().forEach(e -> waves.get(currentWave).addEnemy(e));
-                        }
+                }
 
+                // apply damage and determine if enemy was destroyed
+                if (enemy.destroyedByDamage(damage)){
 
+                    // add reward to total money
+                    this.money += enemy.getReward();
+
+                    // spawn children and protect children from dying in explosion as well as add enemy to
+                    // the wave's list of enemies
+                    if (enemy.spawnChildren() != null) {
+                        enemy.spawnChildren().forEach(e -> {
+                            if (pr instanceof ExplosiveProjectile) explosiveProjectileHits.get(pr).add(e);
+                            waves.get(currentWave).addEnemy(e);
+                        });
                     }
                 }
             }
+
             // if off screen or destroyed, remove from array for garbage collector
             if (pr.isDestroyed() || pr.isOffScreen()) {
-                p.remove();
+                projectileIterator.remove();
             } else {
-                pr.update(timeScale);
+                pr.update();
             }
         }
 
@@ -239,20 +274,19 @@ public class Level {
     /**
      * Updates tower positions and launches projectiles
      * @param input user define input
-     * @param timeScale game speed multiplier
      */
-    private void updateTowers(Input input, float timeScale, List<List<Point>> points) {
+    private void updateTowers(Input input) {
 
 
         // remove tower if it is off screen and is not being placed
         towers.removeIf(tower -> !tower.isPlacing() && tower.isOffScreen());
 
-
-
         towers.forEach(tower -> {
 
             // determine target for tower
             Enemy target = null;
+
+            List<List<Point>> points = map.getAllPolylines();
 
             for (Enemy enemy : getEnemiesOnScreen()) {
 
@@ -267,8 +301,7 @@ public class Level {
                         target = enemy;
 
                     // else if enemy is further in map, set as new target
-                    } else if (enemy.getIndex() > target.getIndex() ||
-                            enemy.getIndex() >= target.getIndex() &&
+                    } else if (enemy.getIndex() >= target.getIndex() &&
                             enemy.getPosition().distanceTo(points.get(0).get(enemy.getIndex()))
                                     < target.getPosition().distanceTo(points.get(0).get(enemy.getIndex()))) {
                         target = enemy;
@@ -284,14 +317,12 @@ public class Level {
             }
 
             // if not placing and is reloaded and has a target, shoot it
-            if (!tower.isPlacing()) {
-                if (tower.isReloaded()) {
-                    projectiles.add(tower.fire(target));
-                }
+            if (!tower.isPlacing() && tower.isReloaded()) {
+                projectiles.add(tower.fire(target));
             }
 
             // update tower
-            tower.update(input, timeScale);
+            tower.update(input);
 
         });
     }
@@ -340,20 +371,24 @@ public class Level {
         else if (dragActive != null) {
             ShadowDefend.updateStatus(STATE_PLACING);
 
-            // if not over blocked positions, place tower
-            // TODO: use blocked tiles instead of lines
-            if (dragActive.canBePlaced(blockedPoints, blockedLines) &&
+            // determine if tile is blocked
+            boolean blockedTile = map.hasProperty((int)input.getMouseX(), (int)input.getMouseY(), BLOCKED_PROPERTY);
+
+            // if not over blocked positions or over a panel, check for mouse left click
+            if (dragActive.canBePlaced(blockedPoints, blockedTile) &&
                     !ShadowDefend.getBuyPanel().getBoundingBox().isMouseOver(input) &&
                     !ShadowDefend.getStatusPanel().getBoundingBox().isMouseOver(input)) {
+
+                // place tower
                 if (input.wasPressed(MouseButtons.LEFT)) {
                     dragActive.place(input.getMouseX(), input.getMouseY());
-
                     // add tower position to blocked points
                     blockedPoints.add(dragActive.getPosition());
                     dragActive = null;
                 }
             }
 
+            // cancel placing tower and return money
             if (input.wasPressed(MouseButtons.RIGHT)) {
                 money += dragActive.getCost();
                 dragActive = null;
@@ -369,7 +404,8 @@ public class Level {
      * @return List of all enemies on screen
      */
     private List<Enemy> getEnemiesOnScreen() {
-        return new ArrayList<>(waves.get(currentWave).getEnemiesOnScreen());
+        if (currentWave < waves.size()) return new ArrayList<>(waves.get(currentWave).getEnemiesOnScreen());
+        return new ArrayList<>();
     }
 
 
@@ -377,43 +413,34 @@ public class Level {
      * creates map for level
      * @return TiledMap object with map file loaded
      */
-    public TiledMap createMap() {
-        //check level folder for a ".tmx" file and use this as the map
-        String mapFile = MAP_PATH + level + MAP_EXT;
+    public TiledMap createMap() { return map = new TiledMap(MAP_PATH + level + MAP_EXT); }
 
-        // return TiledMap object with new map
-        TiledMap tm = new TiledMap(mapFile);
-
-        tm.getAllPolylines().forEach(l -> {
-            int i;
-            for (i = 0; i < l.size() - 1; i++) {
-                blockedPoints.add(l.get(i));
-                blockedLines.add(new Line(l.get(i), l.get(i+1)));
-            }
-        });
-
-        return tm;
-    }
-
-    private void updatePanelText(float timeScale) {
+    /**
+     * Update panel text
+     */
+    private void updatePanelText() {
+        // get panels
         Panel buyPanel = ShadowDefend.getBuyPanel();
         Panel statusPanel = ShadowDefend.getStatusPanel();
 
-        buyPanel.updateText(ShadowDefend.MONEY, ShadowDefend.MONEY + money);
+        // update if tower is purchasable
         for (TowerButton tb : towerButtons) {
             tb.setPurchasable(money);
         }
 
-        if (timeScale > 1) {
-            statusPanel.updateTextColour(ShadowDefend.TIMESCALE, Colour.GREEN);
-        } else if (timeScale == 1) {
-            statusPanel.updateTextColour(ShadowDefend.TIMESCALE, Colour.WHITE);
+        // update timescale colour
+        if (ShadowDefend.getTimescale() > 1) {
+            statusPanel.updateTextColour(ShadowDefend.SP_TIMESCALE, Colour.GREEN);
+        } else if (ShadowDefend.getTimescale() <= 1) {
+            statusPanel.updateTextColour(ShadowDefend.SP_TIMESCALE, Colour.WHITE);
         }
 
-        statusPanel.updateText(ShadowDefend.TIMESCALE, ShadowDefend.TIMESCALE + timeScale);
-        statusPanel.updateText(ShadowDefend.LIVES, ShadowDefend.LIVES + lives);
-        statusPanel.updateText(ShadowDefend.WAVE, ShadowDefend.WAVE + (currentWave + 1));
-
+        // update panel text
+        buyPanel.updateText(ShadowDefend.MONEY, ShadowDefend.MONEY + money);
+        statusPanel.updateText(ShadowDefend.SP_TIMESCALE, ShadowDefend.SP_TIMESCALE +
+                ShadowDefend.getTimescale());
+        statusPanel.updateText(ShadowDefend.SP_LIVES, ShadowDefend.SP_LIVES + lives);
+        statusPanel.updateText(ShadowDefend.SP_WAVE, ShadowDefend.SP_WAVE + (currentWave + 1));
     }
 
     /**
@@ -421,17 +448,21 @@ public class Level {
      * @return boolean if level is complete
      */
     public boolean isLevelComplete() {
+
+        // level is complete when all waves are completed
         if (waves.stream().allMatch(wave -> Boolean.TRUE.equals(wave.isWaveComplete()))) {
             ShadowDefend.updateStatus(STATE_WIN);
             return true;
-        } else {
-            ShadowDefend.removeStatus(STATE_WIN);
         }
         return false;
     }
 
 
+    /**
+     * @return boolean if wave is in progress
+     */
     public boolean isWaveInProgress() {
+        // if wave has ended, remove in progress status
         if (!waveInProgress) {
             ShadowDefend.removeStatus(STATE_IN_PROGRESS);
         }

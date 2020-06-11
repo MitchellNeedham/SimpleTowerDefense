@@ -5,13 +5,17 @@ import bagel.Input;
 import bagel.util.Colour;
 
 
-public class TowerButton implements Clickable {
+public class TowerButton {
 
-    private static final Colour COLOUR_GREEN = new Colour(0, 255, 0);
-    private static final Colour COLOUR_RED = new Colour(255, 0, 0);
+    //-------------------------TOWER BUTTON PROPERTIES-------------------------//
+
     private static final double Y_OFFSET = 50;
     private static final int FONT_SIZE = 20;
-    private final Colour hoverColour = new Colour(255, 255, 255, 0.5);
+    private final static String FONT_FILE = "res/fonts/DejaVuSans-Bold.ttf";
+    private final static String IMAGE_LOCATION = "res/images/";
+    private final static String IMAGE_EXT = ".png";
+    private final static String CURRENCY_SYMBOL = "$";
+
     private final Image btnImage;
     private final String towerType;
     private final double x;
@@ -22,80 +26,59 @@ public class TowerButton implements Clickable {
     private boolean purchasable;
 
 
-    //TODO: polish this class
-
     /**
      * Constructor for Tower Button
      * @param towerType String containing tower type
      * @param x x-coordinate at centre of button position
      * @param y y-coordinate at centre of button position
+     * @param price cost of tower
      */
     public TowerButton(String towerType, double x, double y, double price) {
         this.towerType = towerType;
-        btnImage = new Image("res/images/" + towerType + ".png");
+        btnImage = new Image(IMAGE_LOCATION + towerType + IMAGE_EXT);
         this.x = x;
         this.y = y;
-        // get bounding box
+        // create bounding box
         bb = new BoundingBox(x - btnImage.getHeight() / 2, y - btnImage.getHeight() / 2,
                 btnImage.getWidth(), btnImage.getHeight());
         this.price = price;
 
-        Font font = new Font("res/fonts/DejaVuSans-Bold.ttf", FONT_SIZE);
-        cost = new Text(font, "$" +(int)price, x, y + Y_OFFSET);
+        Font font = new Font(FONT_FILE, FONT_SIZE);
+        double width = font.getWidth(CURRENCY_SYMBOL + (int)price); // get width of text to centre it
 
+        cost = new Text(font, CURRENCY_SYMBOL + (int)price, x - width / 2, y + Y_OFFSET);
         btnImage.draw(x, y);
-
     }
 
+    /**
+     * draws tower button and price
+     */
     public void draw() {
         btnImage.draw(x, y);
         cost.draw();
     }
 
-
-    public double[] getPos() {
-        return new double[]{x, y};
-    }
-
-    @Override
-    public void hover(Input input) {
-        if (bb.isMouseOver(input)) {
-            btnImage.draw(x, y, new DrawOptions().setBlendColour(hoverColour));
+    /**
+     * Updates if a tower is able to be purchased
+     * @param money total money the player has
+     */
+    public void setPurchasable(double money) {
+        if (money < price) {
+            purchasable = false;
+            cost.updateColour(Colour.RED);
+        } else if (money >= price){
+            purchasable = true;
+            cost.updateColour(Colour.GREEN);
         }
-        btnImage.draw(x, y);
     }
 
-    @Override
-    public void click(Input input) {
-
-    }
 
     public BoundingBox getBoundingBox() {
         return bb;
     }
 
-    public void setClicked() { }
+    public String getTowerType() { return towerType; }
 
-    public String getTowerType() {
+    public boolean isPurchasable() { return purchasable; }
 
-        return towerType;
-    }
-
-    public void setPurchasable(double money) {
-        if (money < price) {
-            purchasable = false;
-            cost.updateColour(COLOUR_RED);
-        } else if (money >= price){
-            purchasable = true;
-            cost.updateColour(COLOUR_GREEN);
-        }
-    }
-
-    public boolean isPurchasable() {
-        return purchasable;
-    }
-
-    public double getPrice() {
-        return price;
-    }
 }

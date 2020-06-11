@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface Tower {
 
-    void update(Input input, float timeScale);
+    void update(Input input);
 
     void place(double x, double y);
 
@@ -26,8 +26,7 @@ public interface Tower {
 
     int getCost();
 
-    boolean canBePlaced(List<Point> blockedPoints, List<Line> blockedLines);
+    boolean canBePlaced(List<Point> blockedPoints, boolean blockedTile);
 
-    boolean isBlocked();
 
 }

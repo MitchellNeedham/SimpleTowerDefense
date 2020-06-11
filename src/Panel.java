@@ -9,16 +9,14 @@ import java.util.List;
 import java.util.Map;
 
 public class Panel {
-    private static final String DEFAULT_FONT = "res/fonts/DejaVuSans-Bold.ttf";
-    private static final int DEFAULT_SIZE = 24;
+
+    //-------------------------PANEL PROPERTIES-------------------------//
+
     private final Point pos;
     private final Image backgroundImg;
     private final Map<String, Text> text = new HashMap<>();
-    private final List<Clickable> clickable = new ArrayList<>();
-
-    private final Map<String, Font> fonts = new HashMap<>();
+    private final List<TowerButton> buttons = new ArrayList<>();
     private final BoundingBox bb;
-    // TODO: improve panel using OOP
 
     /**
      * Constructor for panel
@@ -30,29 +28,23 @@ public class Panel {
         this.pos = new Point(x, y);
         this.backgroundImg = new Image(filePath);
         bb = new BoundingBox(x, y, backgroundImg.getWidth(), backgroundImg.getHeight());
-
-
     }
 
     /**
      * Updates panel
      */
     protected void update() {
-        draw();
-    }
-
-    public void draw() {
         backgroundImg.drawFromTopLeft(pos.x, pos.y);
         text.forEach((key, t) -> t.draw());
-        clickable.forEach(Clickable::draw);
+        buttons.forEach(TowerButton::draw);
     }
 
     /**
      * Add clickable object to panel
-     * @param object Clickable object
+     * @param object TowerButton object
      */
-    protected void addClickable(Clickable object) {
-        clickable.add(object);
+    protected void addButton(TowerButton object) {
+        buttons.add(object);
     }
 
     /**
@@ -61,28 +53,25 @@ public class Panel {
      * @param x centre x-coordinate of text
      * @param y centre y-coordinate of text
      */
-    protected void addText(String type, double x, double y, String textContent, Font font) {
-        text.put(type, new Text(font, textContent, x + pos.x, y + pos.y));
-    }
-
-    protected void addText(String type, double x, double y, String textContent, int size) {
-        text.put(type, new Text(new Font(DEFAULT_FONT, size), textContent, pos.x + x, pos.y + y));
-    }
-
-    protected void addText(String type, double x, double y, String textContent) {
-        text.put(type, new Text(new Font(DEFAULT_FONT, DEFAULT_SIZE), textContent, pos.x + x, pos.y + y));
+    protected void addText(String key, double x, double y, String textContent, Font font) {
+        text.put(key, new Text(font, textContent, x + pos.x, y + pos.y));
     }
 
     /**
-     * Updates text (to be redesigned)
-     * @param type String containing current text
+     * Updates text
+     * @param key String containing key for this text field
      * @param newText String containing updated text
      */
-    public void updateText(String type, String newText) {
-        text.get(type).updateText(newText);
+    public void updateText(String key, String newText) {
+        text.get(key).updateText(newText);
     }
 
-    public void updateTextColour(String type, Colour colour) {text.get(type).updateColour(colour);}
+    /**
+     * Updates text colour
+     * @param key String containing key for this text field
+     * @param colour colour to update text to
+     */
+    public void updateTextColour(String key, Colour colour) { text.get(key).updateColour(colour); }
 
     public BoundingBox getBoundingBox() {
         return bb;

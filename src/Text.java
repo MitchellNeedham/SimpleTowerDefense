@@ -4,6 +4,8 @@ import bagel.util.Colour;
 
 public class Text {
 
+    //-------------------------TEXT PROPERTIES-------------------------//
+
     private static final Colour DEFAULT_COLOUR = new Colour(255, 255, 255);
     private final double x;
     private final double y;
@@ -26,17 +28,12 @@ public class Text {
         this.colour = DEFAULT_COLOUR;
     }
 
-    public void draw() {
-        double width = font.getWidth(textContent);
-        font.drawString(textContent, x - width / 2, y, new DrawOptions().setBlendColour(colour));
-    }
+    /**
+     * Draws text
+     */
+    public void draw() { font.drawString(textContent, x, y, new DrawOptions().setBlendColour(colour)); }
 
-    public void updateText(String newText) {
-        textContent = newText;
-    }
+    public void updateText(String newText) { textContent = newText; }
 
-    public void updateColour(Colour colour) {
-        this.colour = colour;
-    }
-
+    public void updateColour(Colour colour) { this.colour = colour; }
 }
