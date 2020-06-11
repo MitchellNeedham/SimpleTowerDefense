@@ -22,7 +22,7 @@ public class ShadowDefend extends AbstractGame {
 
     private static final SortedSet<Integer> STATUS_SET = new TreeSet<>();
     private final static String[] STATUS_TYPE = new String[] {"Awaiting Start", "Wave In Progress", "Placing", "Winner!"};
-    private final static int INITIAL_SP_STATUS = 0;
+    private final static int INITIAL_STATUS = 0;
 
 
     //-------------------------FONT-------------------------//
@@ -35,6 +35,7 @@ public class ShadowDefend extends AbstractGame {
 
     //-------------------------BUY PANEL ITEMS-------------------------//
 
+    private final static Point BUY_PANEL_POS = new Point(0, 0);
     public final static String MONEY = "$";
     private final static Point MONEY_POS = new Point(850, 60);
     private static final String[] BUY_PANEL_BINDINGS_INFO = {"Key bindings:", "S - Start Wave", "P - Pause Game",
@@ -45,6 +46,7 @@ public class ShadowDefend extends AbstractGame {
 
     //-------------------------STATUS PANEL ITEMS-------------------------//
 
+    private final static Point STATUS_PANEL_POS = new Point(0, 743);
     public final static String SP_LIVES = "Lives: ";
     private final static Point SP_LIVES_POS = new Point(930, 16);
     public final static String SP_TIMESCALE = "Timescale: ";
@@ -89,11 +91,11 @@ public class ShadowDefend extends AbstractGame {
      */
     public ShadowDefend() {
         // create buy and status panel
-        buyPanel = new Panel(0,0, BUY_PANEL_IMAGE);
-        statusPanel = new Panel(0, 743, STATUS_PANEL_IMAGE);
+        buyPanel = new Panel(BUY_PANEL_POS.x,BUY_PANEL_POS.y, BUY_PANEL_IMAGE);
+        statusPanel = new Panel(STATUS_PANEL_POS.x, STATUS_PANEL_POS.y, STATUS_PANEL_IMAGE);
         initPanels();
 
-        updateStatus(INITIAL_SP_STATUS);
+        updateStatus(INITIAL_STATUS);
 
         // create level
         this.level = new Level(currentLevel);
