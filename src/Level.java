@@ -23,7 +23,8 @@ public class Level {
 
     private final static int INITIAL_SP_LIVES = 25;
     private final static int INITIAL_MONEY = 500;
-    private final static int REWARD_MONEY = 150;
+    private final static int BASE_REWARD = 150;
+    private final static int INCREMENTAL_REWARD = 100;
 
 
     //-------------------------TOWER BUTTON DATA-------------------------//
@@ -148,6 +149,20 @@ public class Level {
      */
     public void update(Input input) {
 
+        // update towers
+        updateTowers(input);
+
+        // if wave has completed, start a new one and increase player's money
+        if (currentWave < waves.size()) {
+            System.out.println(currentWave);
+            if (waves.get(currentWave).isWaveComplete()) {
+                currentWave++;
+                money += BASE_REWARD + (currentWave - 1) * INCREMENTAL_REWARD;
+                waveInProgress = false;
+            }
+        }
+
+
         // update enemies
         if (waveInProgress) {
             updateEnemies();
@@ -172,13 +187,6 @@ public class Level {
         Wave currWave = waves.get(currentWave); // get current wave
         currWave.getTimer().updateTime(); // update time
         currWave.drawEnemies(map.getAllPolylines()); // draw enemies
-
-        // if wave has completed, start a new one and increase player's money
-        if (waves.get(currentWave).isWaveComplete()) {
-            currentWave++;
-            money += REWARD_MONEY * currentWave;
-            waveInProgress = false;
-        }
 
         // update enemies on screen
         for (Enemy enemy : currWave.getEnemiesOnScreen()) {
@@ -276,7 +284,6 @@ public class Level {
      * @param input user define input
      */
     private void updateTowers(Input input) {
-
 
         // remove tower if it is off screen and is not being placed
         towers.removeIf(tower -> !tower.isPlacing() && tower.isOffScreen());
