@@ -11,7 +11,7 @@ public class Panel {
     private final Point pos;
     private final Image backgroundImg;
     private final Map<String, Text> text = new HashMap<>();
-    private final List<Clickable> clickable = new ArrayList<>();
+    private List<Clickable> clickable = new ArrayList<>();
 
     private final Map<String, Font> fonts = new HashMap<>();
     private final BoundingBox bb;
@@ -83,5 +83,9 @@ public class Panel {
 
     public BoundingBox getBoundingBox() {
         return bb;
+    }
+
+    public void resetButtons() {
+        clickable = new ArrayList<>();
     }
 }

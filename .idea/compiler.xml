@@ -17,4 +17,9 @@
       <module name="mneedham-project-2" target="14" />
     </bytecodeTargetLevel>
   </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="mneedham-project-2" options="--add-exports jdk.scripting.nashorn/jdk.nashorn.internal.objects=ALL-UNNAMED" />
+    </option>
+  </component>
 </project>

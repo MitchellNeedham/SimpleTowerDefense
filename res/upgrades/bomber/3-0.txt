@@ -1,0 +1,14 @@
+main_image,res/images/bomber/3-0/main.png
+top_image,res/images/bomber/3-0/main.png
+bottom_image,res/images/bomber/3-0/runway.png
+projectile_image,res/images/bomber/3-0/projectile.png
+range,1000
+fire_rate,700
+cost,3000
+damage,3
+attack_pattern,4
+explosion_radius,40
+explosion_damage,2
+speed,7
+path_size,400
+projectile_speed,5

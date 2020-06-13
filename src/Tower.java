@@ -10,7 +10,7 @@ public interface Tower {
 
     void place(double x, double y);
 
-    Projectile fire(Enemy target);
+    List<Projectile> fire(Enemy target);
 
     boolean isOffScreen();
 
@@ -29,5 +29,7 @@ public interface Tower {
     boolean isBlocked();
 
     Point getTowerTopPosition();
+
+    boolean isSold();
 
 }

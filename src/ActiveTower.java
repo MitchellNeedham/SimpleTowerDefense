@@ -1,9 +1,12 @@
 import bagel.*;
 import bagel.util.Colour;
 import bagel.util.Point;
+import bagel.util.Vector2;
 
-import java.util.List;
-import java.util.Random;
+import java.io.FileNotFoundException;
+import java.util.*;
+
+import java.io.File;
 
 public abstract class ActiveTower implements Tower, Clickable {
 
@@ -43,7 +46,7 @@ public abstract class ActiveTower implements Tower, Clickable {
     private String tower;
     private String towerBase;
     private String towerTop;
-    private String towerProjectile;
+    private String projectileImage;
     private double projectileSpeed;
     private double projectileDamage;
     private double range;
@@ -51,6 +54,9 @@ public abstract class ActiveTower implements Tower, Clickable {
     private double cost;
     private double turretAngle;
     private double bodyAngle;
+    private int[] streams = {0, 0};
+
+    private boolean sold = false;
 
     private boolean clicked = false; // has tower been clicked?
     private boolean placing; // is tower active or placing?
@@ -58,6 +64,11 @@ public abstract class ActiveTower implements Tower, Clickable {
 
     private boolean blocked = false; // is tower over a blocked position?
 
+    private int attackPattern;
+    private ArrayList<TowerButton> upgradeButtons = new ArrayList<>();
+
+    private final static double GUN_SPACING = 20;
+    private final static double MAX_GUN_WIDTH = 20;
 
 
 
@@ -80,7 +91,7 @@ public abstract class ActiveTower implements Tower, Clickable {
         this.tower = RES_PATH + type + "/main" +IMAGE_EXT;
         this.towerBase = RES_PATH + type + "/bottom" + IMAGE_EXT;
         this.towerTop = RES_PATH + type + "/top" + IMAGE_EXT;
-        this.towerProjectile = RES_PATH + type + "/projectile" + IMAGE_EXT;
+        this.projectileImage = RES_PATH + type + "/projectile" + IMAGE_EXT;
         this.projectileSpeed = projectileSpeed;
         this.projectileDamage = projectileDamage;
         this.range = range;
@@ -91,17 +102,14 @@ public abstract class ActiveTower implements Tower, Clickable {
         turretAngle = new Random().nextDouble() * Math.PI * 2;
         bodyAngle = turretAngle;
         createUpgradePanel();
+        upgrade(0,0);
+
 
     }
 
     public ActiveTower(double x,
                        double y,
                        String type,
-                       double projectileSpeed,
-                       double projectileDamage,
-                       double range,
-                       double fireRate,
-                       double cost,
                        double angle) {
         this.towerPos = new Point(x, y);
         this.towerTopPos = new Point(x, y);
@@ -109,18 +117,15 @@ public abstract class ActiveTower implements Tower, Clickable {
         this.tower = RES_PATH + type + "/main" +IMAGE_EXT;
         this.towerTop = RES_PATH + type + "/main" +IMAGE_EXT;
         this.towerBase = RES_PATH + type + "/runway" +IMAGE_EXT;
-        this.towerProjectile = RES_PATH + type + "/projectile" + IMAGE_EXT;
-        this.projectileSpeed = projectileSpeed;
-        this.projectileDamage = projectileDamage;
-        this.range = range;
-        this.fireRate = fireRate;
-        this.cost = cost;
+        this.projectileImage = RES_PATH + type + "/projectile" + IMAGE_EXT;
 
         this.placing = true;
         turretAngle = angle;
         bodyAngle = turretAngle;
-
         createUpgradePanel();
+        upgrade(0,0);
+
+
     }
 
     /**
@@ -169,10 +174,56 @@ public abstract class ActiveTower implements Tower, Clickable {
      * @return Projectile launched at enemy
      */
     @Override
-    public Projectile fire(Enemy target) {
-        if (target == null) { return null; }
+    public List<Projectile> fire(Enemy target) {
+        if (target == null) { return Collections.emptyList(); }
+        ArrayList<Projectile> projectilesFired = new ArrayList<>();
         time = new Time();
-        return new StandardProjectile(towerProjectile, towerTopPos, projectileSpeed, projectileDamage, target);
+        double standardCount = 0;
+        double directCount = 0;
+
+        switch (attackPattern) {
+            case 0:
+                standardCount = 1;
+                break;
+            case 1:
+                directCount = 2;
+                break;
+            case 2:
+                standardCount = 2;
+                break;
+            case 3:
+                standardCount = 4;
+                break;
+            case 4:
+                directCount = 3;
+                break;
+            case 5:
+                directCount = 2;
+                standardCount = 2;
+                break;
+            case 6:
+                standardCount = 8;
+                break;
+        }
+
+        for (int i = 0; i < directCount; i++) {
+            Vector2 path = new Vector2(Math.cos(turretAngle-Math.PI/2), Math.sin(turretAngle-Math.PI/2)).normalised();
+            Vector2 firePos = getTowerTopPosition().asVector().add(new Vector2(path.y, -path.x).normalised().mul(MAX_GUN_WIDTH/2 - MAX_GUN_WIDTH*i/(directCount-1)));
+            double v = -GUN_SPACING * Math.abs(i - (directCount - 1) / 2);
+            Vector2 spacing = path.normalised().mul(v);
+
+            if (directCount > 2) {
+                projectilesFired.add(new StandardProjectile(projectileImage, firePos.add(spacing).asPoint(), projectileSpeed, projectileDamage, target, path));
+            } else {
+                projectilesFired.add(new StandardProjectile(projectileImage, firePos.add(spacing).asPoint(), projectileSpeed, projectileDamage, path));
+            }
+
+        }
+
+        for (int i = 0; i < standardCount; i++) {
+            projectilesFired.add(new StandardProjectile(projectileImage, getTowerTopPosition(), projectileSpeed, projectileDamage, target));
+        }
+        return projectilesFired;
     }
 
     /**
@@ -208,9 +259,9 @@ public abstract class ActiveTower implements Tower, Clickable {
         Point mousePos = new Point(input.getMouseX(), input.getMouseY());
         if (input.wasPressed(MouseButtons.LEFT) && blocked && !placing) {
 
-            if (mousePos.distanceTo(towerPos) <= 25) {
+            if (mousePos.distanceTo(towerPos) <= 22.5) {
                 clicked = true;
-            } else if (mousePos.distanceTo(towerPos) > 25 && !upgradePanel.getBoundingBox().isMouseOver(input)) {
+            } else if (mousePos.distanceTo(towerPos) > 22.5 && !upgradePanel.getBoundingBox().isMouseOver(input)) {
                 clicked = false;
             }
         }
@@ -227,14 +278,13 @@ public abstract class ActiveTower implements Tower, Clickable {
      * @return boolean if tower can be placed
      */
     public boolean canBePlaced(List<Point> blockedPoints, List<Line> blockedLines) {
-        // TODO: fix these, what the fuck did I do to blocked?
         for (Point p : blockedPoints) {
-            if (p.distanceTo(towerPos) < 50) {
+            if (p.distanceTo(towerPos) < 45) {
                 return blocked = false;
             }
         }
         for (Line l : blockedLines) {
-            if (l.DistanceToLine(towerPos) < 50) {
+            if (l.DistanceToLine(towerPos) < 45) {
                 return blocked = false;
             }
         }
@@ -255,6 +305,52 @@ public abstract class ActiveTower implements Tower, Clickable {
         upgradePanel = new Panel(UPGRADE_PANEL_POS.x, UPGRADE_PANEL_POS.y, UPGRADE_PANEL);
         String capitalisedType = type.substring(0, 1).toUpperCase() + type.substring(1);
         upgradePanel.addText("title", 100, 50, capitalisedType);
+        updateButtons();
+
+    }
+
+    public void updateButtons() {
+        System.out.println(upgradeButtons.size());
+        upgradePanel.resetButtons();
+        upgradeButtons = new ArrayList<>();
+        String image = "";
+        double cost = 0;
+
+        for (int i = 0; i < streams.length; i++) {
+            int upgradeStreams[] = {streams[0] + (int)Math.signum((float)streams[0]), streams[1] + (int)Math.signum((float)streams[1])};
+
+            if (streams[0] == 0 && streams[1] == 0) {
+                upgradeStreams[i]++;
+            }
+
+
+            System.out.printf("%d %d\n", streams[0], streams[1]);
+            if (upgradeStreams[0] <= 3 && upgradeStreams[1] <= 3 && !(streams[i] == 0 && streams[(i+1)%2] > 0)  && streams[i] < 3) {
+                try {
+                    File fp = new File("res/upgrades/" + type + "/" + upgradeStreams[0] + "-" + upgradeStreams[1] + ".txt");
+                    Scanner myReader = new Scanner(fp);
+                    // read file
+                    while (myReader.hasNextLine()) {
+                        String[] upgradeData = myReader.nextLine().split(",");
+                        if (upgradeData[0].equals("main_image")) {
+                            image = upgradeData[1];
+                            System.out.println(image);
+                        } else if (upgradeData[0].equals("cost")) {
+                            cost = Double.parseDouble(upgradeData[1]);
+                        }
+                    }
+                    myReader.close();
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                image = "res/upgrades/noupgrades.png";
+                cost = 0;
+            }
+            upgradeButtons.add(new TowerButton(type, new Image(image), UPGRADE_PANEL_POS.x + 100, UPGRADE_PANEL_POS.y + 150 + 150 * i, cost));
+
+            upgradePanel.addClickable(upgradeButtons.get(i));
+        }
     }
 
 
@@ -282,5 +378,82 @@ public abstract class ActiveTower implements Tower, Clickable {
 
     public Point getTowerTopPosition() { return towerTopPos; }
 
+    public void upgrade(int stream0, int stream1) {
+        try {
+            File fp = new File("res/upgrades/" + type + "/" + stream0 + "-" + stream1 + ".txt");
+            Scanner myReader = new Scanner(fp);
+            while (myReader.hasNextLine()) {
+                String[] upgradeData = myReader.nextLine().split(",");
+                switch (upgradeData[0]) {
+                    case "top_image":
+                        towerTop = upgradeData[1];
+                        break;
+                    case "bottom_image":
+                        towerBase = upgradeData[1];
+                        break;
+                    case "projectile_image":
+                        projectileImage = upgradeData[1];
+                        break;
+                    case "range":
+                        range = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "cost":
+                        cost = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "damage":
+                        projectileDamage = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "fire_rate":
+                        fireRate = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "attack_pattern":
+                        attackPattern = Integer.parseInt(upgradeData[1]);
+                        break;
+                }
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        streams = new int[]{stream0, stream1};
+        updateButtons();
+    }
 
+    public int updateUpgradeButtons(Input input, int money) {
+        int i = 0;
+        if (clicked) {
+            for (TowerButton tb : upgradeButtons) {
+                tb.setPurchasable(money);
+                if (input.wasPressed(MouseButtons.LEFT) && tb.getBoundingBox().isMouseOver(input) && tb.isPurchasable()) {
+                    if (!(streams[i] == 0 && streams[(i+1)%2] > 0)  && streams[i] < 3) {
+                        money -= tb.getPrice();
+                        streams[i]++;
+                        upgrade(streams[0], streams[1]);
+                    }
+                }
+                i++;
+            }
+        }
+        return money;
+    }
+
+    public void setStreams(int s0, int s1) {
+        streams = new int[] {s0, s1};
+    }
+
+    public void resetTime() {
+        time = new Time();
+    }
+
+    public Time getTime() {
+        return time;
+    }
+
+    public void setFireRate(double fireRate) {
+        this.fireRate = fireRate;
+    }
+
+    public boolean isSold() {
+        return sold;
+    }
 }

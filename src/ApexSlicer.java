@@ -1,41 +1,25 @@
 import bagel.util.Point;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ApexSlicer extends Enemy {
 
-    //-------------------------RENDER PRIORITIES-------------------------//
-
-    private static final int Z_INDEX = 7;
-
     //-------------------------SLICER PROPERTIES-------------------------//
 
-    private static final String TYPE = "apexslicer";
-    private static final double CHILDREN_SPAWN_DIST = 10;
-    private static final double SPEED = 0.2;
-    private static final double HEALTH = 25.0;
-    private static final double REWARD = 150.0;
-    private static final double CHILDREN = 4;
+    private static final String IMAGE_PATH = "res/images/slicer/apexslicer.png";
+    private static final double CHILDREN_SPAWN_DIST = 10.0D;
+    private static final double REWARD = 150.0D;
+    private static final double CHILDREN = 4.0D;
+    public static final double SPEED = 0.5D * MegaSlicer.SPEED;
+    public static final double HEALTH = 25.0D * Slicer.HEALTH;
 
     /**
      * Constructor for Slicer
      * @param spawnDelay time in milliseconds after start of waves before slicer spawns
-     * @param type String containing name of slicer enemy
      */
-    public ApexSlicer(int spawnDelay, String type) {
-        super(type, Z_INDEX, SPEED, spawnDelay, "res/images/slicer/" + type + ".png",
-                HEALTH, REWARD);
-
-    }
-
-    /**
-     * Constructor for slicers created upon destruction of parent slicers
-     * @param position position of parent slicer
-     * @param pointsIndex point new slicer should move towards
-     */
-    public ApexSlicer(Point position, int pointsIndex) {
-        super(TYPE, Z_INDEX, SPEED, HEALTH, REWARD,
-                "res/images/slicer/" + TYPE + ".png", position, pointsIndex);
+    public ApexSlicer(int spawnDelay) {
+        super(SPEED, spawnDelay, IMAGE_PATH, HEALTH, REWARD, getTotalPenalty());
     }
 
     /**
@@ -44,16 +28,26 @@ public class ApexSlicer extends Enemy {
      */
     @Override
     public List<Enemy> spawnChildren() {
-
         List<Enemy> slicers = new ArrayList<>();
         Point newPos = getPosition();
-
-        int i;
-        for (i = 0; i < CHILDREN; i++) {
+        // create new children at evenly separated positions
+        for (int i = 0; i < CHILDREN; i++) {
             slicers.add(new MegaSlicer(newPos, getIndex()));
             newPos = newPos.asVector().add(getMoveVector().mul(CHILDREN_SPAWN_DIST / CHILDREN)).asPoint();
         }
         return slicers;
+    }
+
+    /**
+     * gets total penalty for this slicer based on its children
+     * @return total penalty for this slicer
+     */
+    public static double getTotalPenalty() {
+        double penalty = 0;
+        for (int i = 0; i < CHILDREN; i++) {
+            penalty += MegaSlicer.getTotalPenalty();
+        }
+        return penalty;
     }
 }
 

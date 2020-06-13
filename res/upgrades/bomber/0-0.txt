@@ -1,0 +1,9 @@
+main_image,res/images/bomber/0-0/main.png
+top_image,res/images/bomber/0-0/main.png
+bottom_image,res/images/bomber/0-0/runway.png
+projectile_image,res/images/bomber/0-0/projectile.png
+range,0
+fire_rate,1500
+cost,0
+damage,1
+attack_pattern,0

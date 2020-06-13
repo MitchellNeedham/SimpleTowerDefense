@@ -33,10 +33,10 @@ public class Wave {
         for (i = 0; i < enemyCount; i++) {
             // use switch to add enemies respective of type (also avoids crashes if there is a typo)
             switch (enemyData[3]) {
-                case "slicer" -> Enemies.add(new Slicer(totalDelay, enemyData[3]));
-                case "superslicer" -> Enemies.add(new SuperSlicer(totalDelay, enemyData[3]));
-                case "megaslicer" -> Enemies.add(new MegaSlicer(totalDelay, enemyData[3]));
-                case "apexslicer" -> Enemies.add(new ApexSlicer(totalDelay, enemyData[3]));
+                case "slicer" -> Enemies.add(new Slicer(totalDelay));
+                case "superslicer" -> Enemies.add(new SuperSlicer(totalDelay));
+                case "megaslicer" -> Enemies.add(new MegaSlicer(totalDelay));
+                case "apexslicer" -> Enemies.add(new ApexSlicer(totalDelay));
             }
 
             totalDelay += Integer.parseInt(enemyData[4]);
@@ -80,7 +80,7 @@ public class Wave {
 
             //draw enemies
             if (enemy.getIndex() < points.get(0).size() && enemy.isActive() && !enemy.isDestroyed()) {
-                enemy.draw(timeScale, points.get(0).get(enemy.getIndex()).asVector());
+                enemy.draw(points.get(0).get(enemy.getIndex()));
             }
         });
     }

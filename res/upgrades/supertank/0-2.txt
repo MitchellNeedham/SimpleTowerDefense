@@ -1,0 +1,9 @@
+main_image,res/images/supertank/0-2/main.png
+top_image,res/images/supertank/0-2/top.png
+bottom_image,res/images/supertank/0-2/bottom.png
+projectile_image,res/images/supertank/0-2/projectile.png
+range,300
+fire_rate,1200
+cost,800
+attack_pattern,3
+damage,7

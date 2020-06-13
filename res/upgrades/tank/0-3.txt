@@ -1,0 +1,8 @@
+main_image,res/images/tank/0-3/main.png
+top_image,res/images/tank/0-3/top.png
+bottom_image,res/images/tank/0-3/bottom.png
+projectile_image,res/images/tank/0-3/projectile.png
+range,250
+fire_rate,800
+cost,1000
+damage,5

@@ -2,6 +2,7 @@ import bagel.*;
 import bagel.util.Colour;
 import bagel.util.Point;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -29,11 +30,11 @@ public class AirSupport implements Tower {
 
     //-------------------------TOWER PROPERTIES-------------------------//
 
-    private static final double[] FIRE_RATE_RANGE = {0, 2500};
+    private static final double[] FIRE_RATE_RANGE = {0, 2000};
     private static final double RANGE = 0;
-    private static final double MODIFIER = 0.90;
+    private static final double DELAY = 2000;
     private static final double LINE_PATH_THICKNESS = 5;
-    private static final double SPEED = 5.0;
+    private static final double SPEED = 2.5;
 
     // position of tower
     private Point pos;
@@ -127,8 +128,9 @@ public class AirSupport implements Tower {
 
 
     @Override
-    public Projectile fire(Enemy target) {
+    public List<Projectile> fire(Enemy target) {
         // generate new random fire rate
+        ArrayList<Projectile> projectilesFired = new ArrayList<>();
         fireRate = new Random().nextDouble() * (FIRE_RATE_RANGE[1] - FIRE_RATE_RANGE[0]) + FIRE_RATE_RANGE[0];
         System.out.println(fireRate);
 
@@ -137,8 +139,8 @@ public class AirSupport implements Tower {
 
         // create new explosive projectile
         // TODO: use time instead of modifier
-        return new ExplosiveProjectile(PROJECTILE_IMAGE, pos, angle,
-                PROJECTILE_SPEED, EXPLOSION_RADIUS, MODIFIER, PROJECTILE_DAMAGE);
+        projectilesFired.add(new ExplosiveProjectile(pos, EXPLOSION_RADIUS, DELAY, PROJECTILE_DAMAGE));
+        return projectilesFired;
     }
 
     // TODO: fix these, not all are required
@@ -177,5 +179,7 @@ public class AirSupport implements Tower {
         return getPosition();
     }
 
-
+    public boolean isSold() {
+        return false;
+    }
 }

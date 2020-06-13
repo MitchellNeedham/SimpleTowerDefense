@@ -3,7 +3,12 @@ import bagel.util.Colour;
 import bagel.util.Point;
 import bagel.util.Vector2;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
+import java.util.Scanner;
 
 public class Bomber extends ActiveTower {
 
@@ -26,20 +31,21 @@ public class Bomber extends ActiveTower {
 
     //-------------------------TOWER IMAGE FILES-------------------------//
 
-    private static final String RUNWAY_IMAGE = "res/images/bomber/runway.png";
-    private static final String PLANE_IMAGE = "res/images/bomber/main.png";
+    private String runwayImage = "res/images/bomber/runway.png";
+    private String planeImage = "res/images/bomber/main.png";
+    private String projectileImage = "res/images/bomber/projectile.png";
 
 
     //-------------------------TOWER PROPERTIES-------------------------//
 
     private static final String TYPE = "bomber";
-    private static final double PROJECTILE_SPEED = 15;
-    private static final double PROJECTILE_DAMAGE = 2;
-    private static final double RANGE = 250;
-    private static final double FIRE_RATE = 500;
-    private static final double COST = 800;
-    private static final double PATH_SIZE = 300;
-    private static final double SPEED = 1.5;
+    private double projectileSpeed = 6;
+    private double projectileDamage = 2;
+    private double range = 500;
+    private double fireRate = 1500;
+    private double cost = 800;
+    private double pathSize = 300;
+    private double speed = 1.5;
 
 
     //------------------------------------------------------------//
@@ -53,13 +59,22 @@ public class Bomber extends ActiveTower {
     private int direction = 1;
     private Point airBasePos;
 
+    private int attackPattern;
+
+    private double explosionRadius;
+    private double explosionDamage;
+
+    private static final double MAX_GUN_WIDTH = 50;
+    private static final double GUN_SPACING = 10;
+
+
     /**
      * Constructor for Bomber
      * @param x x-position of tower
      * @param y y-position of tower
      */
     public Bomber(double x, double y) {
-        super(x, y, TYPE, PROJECTILE_SPEED, PROJECTILE_DAMAGE, RANGE, FIRE_RATE, COST, RUNWAY_ANGLE);
+        super(x, y, TYPE, RUNWAY_ANGLE);
         angle = RUNWAY_ANGLE;
         rotation = new DrawOptions().setRotation(angle);
     }
@@ -88,10 +103,9 @@ public class Bomber extends ActiveTower {
         setTowerTopPos(pos);
 
         // add images to render queue
-        RenderQueue.addToQueue(RUNWAY_Z, new RenderImage(airBasePos.x, airBasePos.y, RUNWAY_IMAGE, rotation));
+        RenderQueue.addToQueue(RUNWAY_Z, new RenderImage(airBasePos.x, airBasePos.y, runwayImage, rotation));
         RenderQueue.addToQueue(PLANE_Z, new RenderImage(airBasePos.x + planePos.x, airBasePos.y + planePos.y,
-                PLANE_IMAGE, new DrawOptions().setRotation(angle)));
-
+                planeImage, new DrawOptions().setRotation(angle)));
     }
 
     /**
@@ -102,31 +116,31 @@ public class Bomber extends ActiveTower {
     private Vector2 calculatePath(float timeScale) {
 
         // determines x position to get y position from (like a graph)
-        double x = planePos.x + direction * SPEED * timeScale;
+        double x = planePos.x + direction * speed * timeScale;
 
         // keeps x within path width
-        if (x > PATH_SIZE) {
-            x = PATH_SIZE;
-        } else if (x < -PATH_SIZE) {
-            x = -PATH_SIZE;
+        if (x > pathSize) {
+            x = pathSize;
+        } else if (x < -pathSize) {
+            x = -pathSize;
         }
         // calculates y using equation to get a figyre 8
-        double y = Math.sqrt(Math.pow(x, 2) - (Math.pow(x, 4))/(Math.pow(PATH_SIZE, 2)));
+        double y = Math.sqrt(Math.pow(x, 2) - (Math.pow(x, 4))/(Math.pow(pathSize, 2)));
 
         // change quadrant and direction based on where the plane currently is
         // Quadrant 3, direction 1 (--->) | Quadrant 0, direction -1 (<---)
         // -----------------------------------------------------------------
         // Quadrant 2, direction -1 (<---) | Quadrant 1, direction 1 (--->)
         //
-        if (inRange(planePos.x, PATH_SIZE - SPEED * timeScale, PATH_SIZE) && direction == 1) {
+        if (inRange(planePos.x, pathSize - speed * timeScale, pathSize) && direction == 1) {
             quadrant = 0;
             direction = -1;
-        } else if (inRange(planePos.x, 0, SPEED*timeScale) && direction == -1) {
+        } else if (inRange(planePos.x, 0, speed*timeScale) && direction == -1) {
             quadrant = 2;
-        } else if (inRange(planePos.x, -PATH_SIZE, -PATH_SIZE + SPEED*timeScale) && direction == -1) {
+        } else if (inRange(planePos.x, -pathSize, -pathSize + speed*timeScale) && direction == -1) {
             quadrant = 3;
             direction = 1;
-        } else if (inRange(planePos.x, -SPEED*timeScale, 0) && direction == 1) {
+        } else if (inRange(planePos.x, -speed*timeScale, 0) && direction == 1) {
             quadrant = 1;
         }
 
@@ -136,7 +150,7 @@ public class Bomber extends ActiveTower {
         }
 
         // return normalised path vector
-        return new Vector2(x-planePos.x, y - planePos.y).normalised().mul(SPEED*timeScale);
+        return new Vector2(x-planePos.x, y - planePos.y).normalised().mul(speed*timeScale);
     }
 
     /**
@@ -166,9 +180,9 @@ public class Bomber extends ActiveTower {
         if (mousePos.distanceTo(towerPos) <= 25) {
             // if is placing, draw plane and runway
             if (isPlacing()) {
-                RenderQueue.addToQueue(RUNWAY_Z, new RenderImage(towerPos.x, towerPos.y, RUNWAY_IMAGE,
+                RenderQueue.addToQueue(RUNWAY_Z, new RenderImage(towerPos.x, towerPos.y, runwayImage,
                         new DrawOptions().setRotation(RUNWAY_ANGLE)));
-                RenderQueue.addToQueue(PLANE_Z, new RenderImage(towerPos.x, towerPos.y, PLANE_IMAGE,
+                RenderQueue.addToQueue(PLANE_Z, new RenderImage(towerPos.x, towerPos.y, planeImage,
                         new DrawOptions().setRotation(RUNWAY_ANGLE)));
             }
 
@@ -177,13 +191,13 @@ public class Bomber extends ActiveTower {
                 //RenderQueue.addToQueue(OVERLAY_Z, new RenderImage(towerPos.x, towerPos.y, RUNWAY_IMAGE,
                 //        new DrawOptions().setRotation(RUNWAY_ANGLE).setBlendColour(200, 200, 200, 0.2)));
                 RenderQueue.addToQueue(OVERLAY_Z, new RenderImage(
-                        towerPos.x + planePos.x, towerPos.y + planePos.y, PLANE_IMAGE,
+                        towerPos.x + planePos.x, towerPos.y + planePos.y, planeImage,
                         new DrawOptions().setRotation(angle).setBlendColour(200, 200, 200, 0.2)));
                 drawPath();
             } else {
-                RenderQueue.addToQueue(OVERLAY_Z, new RenderImage(towerPos.x, towerPos.y, RUNWAY_IMAGE,
+                RenderQueue.addToQueue(OVERLAY_Z, new RenderImage(towerPos.x, towerPos.y, runwayImage,
                         new DrawOptions().setRotation(RUNWAY_ANGLE).setBlendColour(BLOCKED_COLOUR)));
-                RenderQueue.addToQueue(OVERLAY_Z, new RenderImage(towerPos.x, towerPos.y, PLANE_IMAGE,
+                RenderQueue.addToQueue(OVERLAY_Z, new RenderImage(towerPos.x, towerPos.y, planeImage,
                         new DrawOptions().setRotation(RUNWAY_ANGLE).setBlendColour(BLOCKED_COLOUR)));
             }
         }
@@ -193,7 +207,7 @@ public class Bomber extends ActiveTower {
      * Draws figure 8 path of plane
      */
     private void drawPath() {
-        Point prev = new Point(-PATH_SIZE + getPosition().x, 0 + getPosition().y);
+        Point prev = new Point(-pathSize + getPosition().x, 0 + getPosition().y);
         double x;
         int i = -1;
 
@@ -201,10 +215,10 @@ public class Bomber extends ActiveTower {
         while (i <= 1) {
 
             // draw small lines between every pixel from left to right on path to create figure 8
-            for (x = -PATH_SIZE; x <= PATH_SIZE; x++) {
+            for (x = -pathSize; x <= pathSize; x++) {
 
                 // calculates y value for every x value
-                double y = Math.sqrt(Math.pow(x, 2) - (Math.pow(x, 4))/(Math.pow(PATH_SIZE, 2))) * i;
+                double y = Math.sqrt(Math.pow(x, 2) - (Math.pow(x, 4))/(Math.pow(pathSize, 2))) * i;
 
                 // set current point
                 Point curr = new Point(x + getPosition().x, y + getPosition().y);
@@ -214,11 +228,134 @@ public class Bomber extends ActiveTower {
 
                 prev = curr;
             }
-            prev = new Point(-PATH_SIZE + getPosition().x, 0 + getPosition().y);
+            prev = new Point(-pathSize + getPosition().x, 0 + getPosition().y);
             i += 2;
         }
-
-
     }
+
+    @Override
+    public void upgrade(int stream0, int stream1) {
+        try {
+            File fp = new File("res/upgrades/" + TYPE + "/" + stream0 + "-" + stream1 + ".txt");
+            Scanner myReader = new Scanner(fp);
+            // read file
+            while (myReader.hasNextLine()) {
+                String[] upgradeData = myReader.nextLine().split(",");
+                switch (upgradeData[0]) {
+                    case "top_image":
+                        planeImage = upgradeData[1];
+                        break;
+                    case "bottom_image":
+                        runwayImage = upgradeData[1];
+                        break;
+                    case "projectile_image":
+                        projectileImage = upgradeData[1];
+                        break;
+                    case "range":
+                        range = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "cost":
+                        cost = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "fire_rate":
+                        setFireRate(Double.parseDouble(upgradeData[1]));
+                        break;
+                    case "damage":
+                        projectileDamage = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "attack_pattern":
+                        attackPattern = Integer.parseInt(upgradeData[1]);
+                        break;
+                    case "explosion_radius":
+                        explosionRadius = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "explosion_damage":
+                        explosionDamage = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "path_size":
+                        pathSize = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "speed":
+                        speed = Double.parseDouble(upgradeData[1]);
+                        break;
+                    case "projectile_speed":
+                        projectileSpeed = Double.parseDouble(upgradeData[1]);
+                        break;
+                }
+            }
+            myReader.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        setStreams(stream0, stream1);
+        updateButtons();
+    }
+
+    @Override
+    public List<Projectile> fire(Enemy target) {
+        ArrayList<Projectile> projectilesFired = new ArrayList<>();
+        resetTime();
+        double standardCount = 0;
+        double trackingCount = 0;
+        double directCount = 0;
+        double random = 0;
+
+        switch (attackPattern) {
+            case 0:
+                directCount = 2;
+                break;
+            case 1:
+                standardCount = 8;
+                random = 0.2;
+                break;
+            case 2:
+                standardCount = 24;
+                random = 0.4;
+                break;
+            case 3:
+                trackingCount = 8;
+                break;
+            case 4:
+                trackingCount = 16;
+                break;
+            case 5:
+                directCount = 4;
+                break;
+            case 6:
+                directCount = 2;
+                standardCount = 4;
+                break;
+
+        }
+
+        for (int i = 0; i < directCount; i++) {
+            Vector2 firePos = getTowerTopPosition().asVector().add(new Vector2(path.y, -path.x).normalised().mul(MAX_GUN_WIDTH/2 - MAX_GUN_WIDTH*i/(directCount-1)));
+            double v = -GUN_SPACING * Math.abs(i - (directCount - 1) / 2);
+            Vector2 spacing = path.normalised().mul(v);
+
+            if (directCount > 2 && target != null) {
+                projectilesFired.add(new StandardProjectile(projectileImage, firePos.add(spacing).asPoint(), projectileSpeed, projectileDamage, target, path));
+            } else {
+                projectilesFired.add(new StandardProjectile(projectileImage, firePos.add(spacing).asPoint(), projectileSpeed, projectileDamage, path));
+            }
+
+        }
+
+        for (int i = 0; i < standardCount; i++) {
+            Vector2 projectilePath = new Vector2(Math.sin(angle + Math.PI/(standardCount/2) * i), Math.cos(angle + Math.PI/(standardCount/2) * i)).normalised();
+            projectilesFired.add(new StandardProjectile(projectileImage, getTowerTopPosition(), projectileSpeed, projectileDamage, projectilePath));
+        }
+
+        for (int i = 0; i < trackingCount; i++) {
+            Vector2 projectilePath = new Vector2(Math.sin(angle + Math.PI/(trackingCount/2) * i), Math.cos(angle + Math.PI/(trackingCount/2) * i)).normalised();
+            projectilesFired.add(new StandardProjectile(projectileImage, getTowerTopPosition(), projectileSpeed, projectileDamage, target, projectilePath));        }
+
+        if (new Random().nextDouble() < random) {
+            projectilesFired.add(new ExplosiveProjectile(getTowerTopPosition(),explosionRadius, 2000, explosionDamage));
+        }
+        return projectilesFired;
+    }
+    @Override
+    public double getRange() { return range; }
 
 }

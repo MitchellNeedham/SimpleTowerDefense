@@ -22,53 +22,67 @@ public class ShadowDefend extends AbstractGame {
      *
      */
 
+    //-------------------------STATUS DATA-------------------------//
+
     private static final SortedSet<Integer> STATUS_SET = new TreeSet<>();
     private final static String[] STATUS_TYPE = new String[] {"Awaiting Start", "Wave In Progress", "Placing", "Winner!"};
     private final static int INITIAL_STATUS = 0;
+
+
+    //-------------------------FONT-------------------------//
+
     private static final String FONT_FILE = "res/fonts/DejaVuSans-Bold.ttf";
+    private static final int BUY_PANEL_FONT_SIZE = 48;
+    private static final int BINDINGS_FONT_SIZE = 16;
+    private static final int STATUS_PANEL_FONT_SIZE = 16;
 
 
     //-------------------------BUY PANEL ITEMS-------------------------//
 
-    private static final int BUY_PANEL_FONT_SIZE = 48;
-    public final static String MONEY = "$ ";
-    private final static Point MONEY_POS = new Point(800, 60);
+    private final static Point BUY_PANEL_POS = new Point(0, 0);
+    public final static String MONEY = "$";
+    private final static Point MONEY_POS = new Point(850, 60);
+    private static final String[] BUY_PANEL_BINDINGS_INFO = {"Key bindings:", "S - Start Wave", "P - Pause Game",
+            "L - Increase Timescale", "K - Decrease Timescale"};
+    private static final double BINDINGS_X_POSITION = 500D;
+    private static final double BINDINGS_HEIGHT = 100D;
 
 
     //-------------------------STATUS PANEL ITEMS-------------------------//
 
-    private static final int STATUS_PANEL_FONT_SIZE = 16;
-    public final static String LIVES = "Lives: ";
-    private final static Point LIVES_POS = new Point(970, 16);
-    public final static String TIMESCALE = "Timescale: ";
-    private final static Point TIMESCALE_POS = new Point(200, 16);
-    public final static String WAVE = "Wave: ";
-    private final static Point WAVE_POS = new Point(40, 16);
-    public final static String STATUS = "Status: ";
-    private final static Point STATUS_POS = new Point(400, 16);
+    private final static Point STATUS_PANEL_POS = new Point(0, 743);
+    public final static String SP_LIVES = "Lives: ";
+    private final static Point SP_LIVES_POS = new Point(950, 16);
+    public final static String SP_TIMESCALE = "Timescale: ";
+    private final static Point SP_TIMESCALE_POS = new Point(200, 16);
+    public final static String SP_WAVE = "Wave: ";
+    private final static Point SP_WAVE_POS = new Point(40, 16);
+    public final static String SP_STATUS = "Status: ";
+    private final static Point SP_STATUS_POS = new Point(400, 16);
 
+    //-------------------------IMAGE AND MAP DATA-------------------------//
 
-
-
+    // off screen render location
     private final static int OFF_SCREEN_X = -100;
     private final static int OFF_SCREEN_Y = -100;
+    private final Stack<Image> imageFiles = new Stack<>();
     private final static String IMG_PATH = "res/images/";
     private final static String LEVEL_PATH = "res/levels/";
-
     private static final String BUY_PANEL_IMAGE = "res/images/panels/buypanel.png";
     private static final String STATUS_PANEL_IMAGE = "res/images/panels/statuspanel.png";
+    private final static String LEVEL_MAP_EXT = ".tmx";
+
+
+    //-------------------------GAME PROPERTIES-------------------------//
+
     private static Panel buyPanel;
     private static Panel statusPanel;
-
-    private TiledMap map;
+    private static TiledMap map;
     private final int maxLevels;
     private Level level;
     private int currentLevel = 1;
-    //private Wave wave;
     private static float timeScale = 1.0f;
-    private final Stack<Image> imageFiles = new Stack<>();
-
-    private float timeScaleSave = 1.0f;
+    private float timeScaleStore = 1.0f;
 
 
 
@@ -82,20 +96,14 @@ public class ShadowDefend extends AbstractGame {
      */
     public ShadowDefend() {
         // create buy and status panel
-        // TODO: create endgame panel
-        buyPanel = new Panel(0,0, BUY_PANEL_IMAGE);
-        statusPanel = new Panel(0, 743, STATUS_PANEL_IMAGE);
+        buyPanel = new Panel(BUY_PANEL_POS.x,BUY_PANEL_POS.y, BUY_PANEL_IMAGE);
+        statusPanel = new Panel(STATUS_PANEL_POS.x, STATUS_PANEL_POS.y, STATUS_PANEL_IMAGE);
         initPanels();
         updateStatus(INITIAL_STATUS);
-
-        // create level
-        this.level = new Level(currentLevel);
 
         // determine number of levels
         this.maxLevels = getMaxLevels();
 
-        // create map
-        this.map = level.createMap();
 
         // initialise menu
         Menu.init(maxLevels);
@@ -116,7 +124,7 @@ public class ShadowDefend extends AbstractGame {
         // update menu and if menu is not active (in gamestate), update game
         if (Menu.update(input) == 0) {
             // if level selected is not current level, load it instead
-            if (Menu.getLevel() != level.getLevel()) {
+            if (level == null || Menu.getLevel() != level.getLevel()) {
                 level = new Level(Menu.getLevel());
                 map = level.createMap();
             }
@@ -143,7 +151,7 @@ public class ShadowDefend extends AbstractGame {
 
 
         //start wave when 'S' key is pressed, but only if a wave is not in progress
-        if (input.wasPressed(Keys.S) && !level.isWaveInProgress()) {
+        if (!level.isWaveInProgress() && input.wasPressed(Keys.S)) {
             level.start();
         }
 
@@ -160,12 +168,11 @@ public class ShadowDefend extends AbstractGame {
         // pause game
         if (input.wasPressed(Keys.P)) {
             if (timeScale > 0) {
-                timeScaleSave = timeScale;
+                timeScaleStore = timeScale;
                 timeScale = 0;
             } else if (timeScale == 0) {
-                timeScale = timeScaleSave;
+                timeScale = timeScaleStore;
             }
-
         }
 
         //if wave is in progress, update gameTime from start of wave and draw enemies
@@ -183,7 +190,7 @@ public class ShadowDefend extends AbstractGame {
             //next level
             currentLevel++;
             level = new Level(currentLevel);
-            this.map = level.createMap();
+            map = level.createMap();
 
             //reset timeScale
             timeScale = 1;
@@ -236,22 +243,36 @@ public class ShadowDefend extends AbstractGame {
 
     public static void initPanels() {
         buyPanel.addText(MONEY, MONEY_POS.x, MONEY_POS.y, "", new Font(FONT_FILE, BUY_PANEL_FONT_SIZE));
-        statusPanel.addText(LIVES, LIVES_POS.x, LIVES_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
-        statusPanel.addText(WAVE, WAVE_POS.x, WAVE_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
-        statusPanel.addText(STATUS, STATUS_POS.x, STATUS_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
-        statusPanel.addText(TIMESCALE, TIMESCALE_POS.x, TIMESCALE_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
+        statusPanel.addText(SP_LIVES, SP_LIVES_POS.x, SP_LIVES_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
+        statusPanel.addText(SP_WAVE, SP_WAVE_POS.x, SP_WAVE_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
+        statusPanel.addText(SP_STATUS, SP_STATUS_POS.x, SP_STATUS_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
+        statusPanel.addText(SP_TIMESCALE, SP_TIMESCALE_POS.x, SP_TIMESCALE_POS.y, "", new Font(FONT_FILE, STATUS_PANEL_FONT_SIZE));
     }
 
+    /**
+     * Update status
+     * @param status int containing new status
+     */
     public static void updateStatus(int status) {
-        STATUS_SET.add(status);
-        System.out.println(STATUS_TYPE[STATUS_SET.last()]);
-        statusPanel.updateText(STATUS, STATUS + STATUS_TYPE[STATUS_SET.last()]);
+        if (!STATUS_SET.contains(status)) {
+            STATUS_SET.add(status); // add status to sorted set
+            // update text to last status in status set
+            statusPanel.updateText(SP_STATUS, SP_STATUS + STATUS_TYPE[STATUS_SET.last()]);
+        }
+
     }
 
+    /**
+     * Remove status that is no longer current
+     * @param status int containing status to be removed
+     */
     public static void removeStatus(int status) {
-        STATUS_SET.remove(status);
+        if (STATUS_SET.contains(status)) {
+            STATUS_SET.remove(status); // remove status from status set
+            // update text to show last status in status set
+            statusPanel.updateText(SP_STATUS, SP_STATUS + STATUS_TYPE[STATUS_SET.last()]);
+        }
     }
-
 
 
     public static Panel getBuyPanel() {
@@ -262,7 +283,12 @@ public class ShadowDefend extends AbstractGame {
         return statusPanel;
     }
 
-    public static double getTimeScale() {
+    public static float getTimeScale() {
         return timeScale;
+    }
+
+    public static void exitGame() {
+        Window.close();
+        System.exit(0);
     }
 }

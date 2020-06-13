@@ -44,4 +44,8 @@ public class Text implements MenuItem {
         this.colour = colour;
     }
 
+    public void boxDraw() {
+        double width = font.getWidth(textContent);
+        font.drawString(textContent, x - width, y, new DrawOptions().setBlendColour(colour));
+    }
 }

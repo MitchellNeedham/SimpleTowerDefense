@@ -18,9 +18,8 @@ public class TowerButton implements Clickable {
     private final Text cost;
     private double price;
     private boolean purchasable;
+    private final Text info;
 
-
-    //TODO: polish this class
 
     /**
      * Constructor for Tower Button
@@ -42,11 +41,27 @@ public class TowerButton implements Clickable {
         cost = new Text(font, "$" +(int)price, x, y + Y_OFFSET);
 
         RenderQueue.addToQueue(0, this);
+        info = null;
+    }
+
+    public TowerButton(String info, Image image, double x, double y, double price) {
+        btnImage = image;
+        this.x = x;
+        this.y = y;
+        this.price = price;
+        bb = new BoundingBox(x - btnImage.getHeight() / 2, y - btnImage.getHeight() / 2,
+                btnImage.getWidth(), btnImage.getHeight());
+        this.price = price;
+        towerType = "";
+
+        Font font = new Font("res/fonts/DejaVuSans-Bold.ttf", FONT_SIZE);
+        this.info = new Text(font, info, x, y);
+        cost = new Text(font, "$" +(int)price, x, y + Y_OFFSET);
     }
 
     public void draw() {
         btnImage.draw(x, y);
-        cost.draw();
+        if (price > 0) cost.draw();
     }
 
 
@@ -59,7 +74,6 @@ public class TowerButton implements Clickable {
         if (bb.isMouseOver(input)) {
             btnImage.draw(x, y, new DrawOptions().setBlendColour(hoverColour));
         }
-        btnImage.draw(x, y);
     }
 
     @Override
@@ -82,22 +96,20 @@ public class TowerButton implements Clickable {
         if (money < price) {
             purchasable = false;
             cost.updateColour(COLOUR_RED);
-
         } else if (money >= price){
             purchasable = true;
             cost.updateColour(COLOUR_GREEN);
         }
-        purchasable = true;
+    }
+
+    public void showInfo() {
+        info.boxDraw();
     }
 
     public boolean isPurchasable() {
         return purchasable;
     }
 
-    public void increasePrice() {
-        price += PRICE_INCREMENT;
-        cost.updateText("$" + (int)price);
-    }
 
     public double getPrice() {
         return price;

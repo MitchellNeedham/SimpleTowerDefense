@@ -1,6 +1,9 @@
 import bagel.util.Point;
+import bagel.util.Vector2;
 
 import java.util.Map;
+
+import static jdk.nashorn.internal.objects.Global.Infinity;
 
 
 public class Line {
@@ -9,9 +12,10 @@ public class Line {
 
     private static final int COEFFICIENTS = 3; // uses three coefficients for distance to line function
 
-    private final Point point0;
+    private Point point0;
     private final Point point1;
     private final double[] lineCoefficients = new double[COEFFICIENTS];
+    private final Vector2 adjustment = new Vector2(-1, 0);
 
     public Line(Point point0, Point point1) {
         this.point0 = point0;
@@ -58,5 +62,10 @@ public class Line {
         lineCoefficients[0] = gradient; // gradient of line
         lineCoefficients[1] = -1; // always -1
         lineCoefficients[2] = intercept; // intercept of line at x = 0
+
+        if (intercept == Infinity || intercept == -Infinity) {
+            point0 = point0.asVector().add(adjustment).asPoint();
+            getLineCoefficients();
+        }
     }
 }

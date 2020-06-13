@@ -50,16 +50,18 @@ public class Level {
     private static final double TOWER_BUTTON_OFFSET_X = 120;
     private final List<TowerButton> towerButtons = new ArrayList<>();
     private double planeOrientation = 0;
-    private final List<Projectile> projectiles = new ArrayList<>();
+    private List<Projectile> projectiles = new ArrayList<>();
 
     private final Stack<Tower> towers = new Stack<>();
 
-    private Map<Projectile, ArrayList<Enemy>> explosiveProjectileHits = new HashMap<>();
+    private final Map<Projectile, ArrayList<Enemy>> explosiveProjectileHits = new HashMap<>();
 
     private Tower dragActive = null;
 
     private final List<Point> blockedPoints = new ArrayList<>();
     private final List<Line> blockedLines = new ArrayList<>();
+
+    private TiledMap map;
 
     /**
      * Level constructor
@@ -82,10 +84,9 @@ public class Level {
                     TOWER_BUTTON_POSITION[1], towerPrices[i]));
             buyPanel.addClickable(towerButtons.get(i));
         }
-        statusPanel.updateText(ShadowDefend.TIMESCALE, ShadowDefend.TIMESCALE + ShadowDefend.getTimeScale());
-        statusPanel.updateText(ShadowDefend.LIVES, ShadowDefend.LIVES + lives);
-        statusPanel.updateText(ShadowDefend.WAVE, ShadowDefend.WAVE + currentWave);
-
+        statusPanel.updateText(ShadowDefend.SP_TIMESCALE, ShadowDefend.SP_TIMESCALE + ShadowDefend.getTimeScale());
+        statusPanel.updateText(ShadowDefend.SP_LIVES, ShadowDefend.SP_LIVES + lives);
+        statusPanel.updateText(ShadowDefend.SP_WAVE, ShadowDefend.SP_WAVE + currentWave);
     }
 
     /**
@@ -139,23 +140,21 @@ public class Level {
         // update enemies
         if (waveInProgress) {
             updateEnemies(timeScale, points);
+            // update projectiles
+            updateProjectiles(timeScale);
+        } else {
+            projectiles = new ArrayList<>();
         }
-        // update projectiles
-        updateProjectiles(timeScale);
+
 
         // update towers
         updateTowers(input, timeScale, points);
 
-
-
         // update panels
-
         updatePanelText(timeScale);
 
         // create tower from buy panel
         createTower(input);
-
-
     }
 
     /**
@@ -178,6 +177,9 @@ public class Level {
             if (enemy.getIndex() >= points.get(0).size()) {
                 enemy.destroy();
                 lives -= enemy.getPenalty();
+                if (lives < 0) {
+                    ShadowDefend.exitGame();
+                }
             }
         }
 
@@ -208,7 +210,7 @@ public class Level {
             // if projectile is explosive, destroy enemies within area of effect
 
             for (Enemy enemy : getEnemiesOnScreen()) {
-                if (pr.getClass() == ExplosiveProjectile.class) {
+                if (pr instanceof ExplosiveProjectile) {
                     if (!explosiveProjectileHits.containsKey(pr)) {
                         explosiveProjectileHits.put(pr, new ArrayList<>());
                     }
@@ -253,11 +255,18 @@ public class Level {
 
 
         // remove tower if it is off screen and is not being placed
-        towers.removeIf(tower -> !tower.isPlacing() && tower.isOffScreen());
+        towers.removeIf(tower -> (!tower.isPlacing() && tower.isOffScreen()));
+
+
 
 
 
         towers.forEach(tower -> {
+
+            if (tower instanceof ActiveTower) {
+                money = ((ActiveTower)tower).updateUpgradeButtons(input, money);
+            }
+
 
             // determine target for tower
             Enemy target = null;
@@ -266,7 +275,7 @@ public class Level {
 
                 // get distance from enemy to tower
                 double distance = enemy.getPosition().distanceTo(tower.getTowerTopPosition());
-
+                System.out.printf("range: %f", tower.getRange());
                 // consider it a potential target if within range
                 if (distance < tower.getRange() && enemy.getIndex() != points.get(0).size()) {
 
@@ -292,10 +301,8 @@ public class Level {
             }
 
             // if not placing and is reloaded and has a target, shoot it
-            if (!tower.isPlacing()) {
-                if (tower.isReloaded()) {
-                    projectiles.add(tower.fire(target));
-                }
+            if (!tower.isPlacing() && tower.isReloaded() && waveInProgress) {
+                projectiles.addAll(tower.fire(target));
             }
 
             // update tower
@@ -327,14 +334,12 @@ public class Level {
                                 towers.add(newTower);
                                 dragActive = newTower;
                                 money -= tb.getPrice();
-                                tb.increasePrice();
                             }
                             case "supertank" -> {
                                 Tower newTower = new SuperTank(input.getMouseX(), input.getMouseY());
                                 towers.add(newTower);
                                 dragActive = newTower;
                                 money -= tb.getPrice();
-                                tb.increasePrice();
                             }
                             case "airsupport" -> {
                                 Tower newTower = new AirSupport(input.getMouseX(), input.getMouseY(), planeOrientation);
@@ -342,7 +347,6 @@ public class Level {
                                 dragActive = newTower;
                                 planeOrientation = (planeOrientation + Math.PI/2) % (Math.PI);
                                 money -= tb.getPrice();
-                                tb.increasePrice();
                             }
                             case "bomber" -> {
                                 Tower newTower = new Bomber(input.getMouseX(), input.getMouseY());
@@ -350,7 +354,6 @@ public class Level {
                                 dragActive = newTower;
                                 planeOrientation = (planeOrientation + Math.PI/2) % (Math.PI);
                                 money -= tb.getPrice();
-                                tb.increasePrice();
                             }
                         }
                     }
@@ -410,17 +413,16 @@ public class Level {
         }
 
         // return TiledMap object with new map
-        TiledMap tm = new TiledMap(MAP_FILE);
+        map = new TiledMap(MAP_FILE);
 
-        tm.getAllPolylines().forEach(l -> {
+        map.getAllPolylines().forEach(l -> {
             int i;
             for (i = 0; i < l.size() - 1; i++) {
-                blockedPoints.add(l.get(i));
                 blockedLines.add(new Line(l.get(i), l.get(i+1)));
             }
         });
 
-        return tm;
+        return map;
     }
 
     private void updatePanelText(float timeScale) {
@@ -432,14 +434,14 @@ public class Level {
         }
 
         if (timeScale > 1) {
-            statusPanel.updateTextColour(ShadowDefend.TIMESCALE, Colour.GREEN);
+            statusPanel.updateTextColour(ShadowDefend.SP_TIMESCALE, Colour.GREEN);
         } else if (timeScale == 1) {
-            statusPanel.updateTextColour(ShadowDefend.TIMESCALE, Colour.WHITE);
+            statusPanel.updateTextColour(ShadowDefend.SP_TIMESCALE, Colour.WHITE);
         }
 
-        statusPanel.updateText(ShadowDefend.TIMESCALE, ShadowDefend.TIMESCALE + timeScale);
-        statusPanel.updateText(ShadowDefend.LIVES, ShadowDefend.LIVES + lives);
-        statusPanel.updateText(ShadowDefend.WAVE, ShadowDefend.WAVE + (currentWave + 1));
+        statusPanel.updateText(ShadowDefend.SP_TIMESCALE, ShadowDefend.SP_TIMESCALE + timeScale);
+        statusPanel.updateText(ShadowDefend.SP_LIVES, ShadowDefend.SP_LIVES + lives);
+        statusPanel.updateText(ShadowDefend.SP_WAVE, ShadowDefend.SP_WAVE + (currentWave + 1));
 
     }
 
@@ -450,18 +452,15 @@ public class Level {
     public boolean isLevelComplete() {
         if (waves.stream().allMatch(wave -> Boolean.TRUE.equals(wave.isWaveComplete()))) {
             ShadowDefend.updateStatus(STATE_WIN);
+            ShadowDefend.getBuyPanel().resetButtons();
             return true;
-        } else {
-            ShadowDefend.removeStatus(STATE_WIN);
         }
         return false;
     }
 
 
     public boolean isWaveInProgress() {
-        System.out.println(waveInProgress);
         if (!waveInProgress) {
-            System.out.println(2);
         }
         return waveInProgress;
     }
