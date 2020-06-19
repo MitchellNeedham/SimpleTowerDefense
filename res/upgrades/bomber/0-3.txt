@@ -2,7 +2,7 @@ main_image,res/images/bomber/0-3/main.png
 top_image,res/images/bomber/0-3/main.png
 bottom_image,res/images/bomber/0-3/runway.png
 projectile_image,res/images/bomber/0-3/projectile.png
-range,1000
+range,2000
 fire_rate,800
 cost,2000
 damage,5
